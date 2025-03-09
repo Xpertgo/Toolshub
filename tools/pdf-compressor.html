@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Compressor - ToolsHub</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <style>
+        .compress-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        .upload-area {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .upload-area:hover {
+            border-color: #007bff;
+            background: #f8f9fa;
+        }
+
+        .upload-area i {
+            font-size: 3rem;
+            color: #007bff;
+            margin-bottom: 1rem;
+        }
+
+        .compression-options {
+            margin: 2rem 0;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .quality-slider {
+            width: 100%;
+            margin: 1rem 0;
+        }
+
+        .file-info {
+            margin: 1rem 0;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+
+        .preview-container {
+            margin: 2rem 0;
+            text-align: center;
+        }
+
+        #previewCanvas {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+
+        .loading {
+            display: none;
+            margin: 1rem 0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: #f0f0f0;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .progress {
+            width: 0%;
+            height: 100%;
+            background: #007bff;
+            transition: width 0.3s ease;
+        }
+
+        .quality-info {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 0.5rem;
+        }
+
+        .size-info {
+            display: flex;
+            justify-content: space-between;
+            margin: 1rem 0;
+            padding: 1rem;
+            background: #fff;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .size-info div {
+            text-align: center;
+        }
+
+        .size-info span {
+            display: block;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #007bff;
+        }
+
+        .size-info small {
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="logo">
+                <a href="../index.html">ToolsHub</a>
+            </div>
+            <ul class="nav-links">
+                <li><a href="../index.html">Home</a></li>
+                <li><a href="../image-tools.html">Image Tools</a></li>
+                <li><a href="../pdf-tools.html">PDF Tools</a></li>
+                <li><a href="../about.html">About</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class="page-header">
+            <div class="container">
+                <h1>PDF Compressor</h1>
+                <p>Reduce PDF file size while maintaining quality</p>
+            </div>
+        </section>
+
+        <div class="compress-container">
+            <div class="upload-area" id="dropZone">
+                <i class="fas fa-file-pdf"></i>
+                <h3>Drop your PDF here or click to upload</h3>
+                <p>Maximum file size: 100MB</p>
+                <input type="file" id="fileInput" accept=".pdf" style="display: none">
+            </div>
+
+            <div class="file-info" id="fileInfo" style="display: none">
+                <div class="size-info">
+                    <div>
+                        <span id="originalSize">0 MB</span>
+                        <small>Original Size</small>
+                    </div>
+                    <div>
+                        <i class="fas fa-arrow-right"></i>
+                    </div>
+                    <div>
+                        <span id="compressedSize">0 MB</span>
+                        <small>Estimated Size</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="compression-options" id="compressionOptions" style="display: none">
+                <h3>Compression Settings</h3>
+                <div class="quality-control">
+                    <label for="qualitySlider">Compression Level:</label>
+                    <input type="range" id="qualitySlider" class="quality-slider" min="1" max="4" value="2">
+                    <div class="quality-info">
+                        <span>Higher Quality</span>
+                        <span>Smaller Size</span>
+                    </div>
+                </div>
+                <div class="compression-mode">
+                    <label>
+                        <input type="checkbox" id="imageCompression" checked>
+                        Compress Images
+                    </label>
+                    <label>
+                        <input type="checkbox" id="fontSubsetting" checked>
+                        Optimize Fonts
+                    </label>
+                </div>
+                <button class="btn-primary" id="compressButton">Compress PDF</button>
+            </div>
+
+            <div class="loading" id="loading">
+                <p>Compressing PDF...</p>
+                <div class="progress-bar">
+                    <div class="progress" id="progress"></div>
+                </div>
+            </div>
+
+            <div class="preview-container">
+                <canvas id="previewCanvas"></canvas>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <h2>ToolsHub</h2>
+                    <p>Free online tools for everyone</p>
+                </div>
+            </div>
+            <div class="copyright">
+                <p>&copy; 2025 ToolsHub. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const dropZone = document.getElementById('dropZone');
+            const fileInput = document.getElementById('fileInput');
+            const fileInfo = document.getElementById('fileInfo');
+            const compressionOptions = document.getElementById('compressionOptions');
+            const originalSizeSpan = document.getElementById('originalSize');
+            const compressedSizeSpan = document.getElementById('compressedSize');
+            const qualitySlider = document.getElementById('qualitySlider');
+            const imageCompression = document.getElementById('imageCompression');
+            const fontSubsetting = document.getElementById('fontSubsetting');
+            const compressButton = document.getElementById('compressButton');
+            const loading = document.getElementById('loading');
+            const progress = document.getElementById('progress');
+            let currentPdfDoc = null;
+            let originalFileSize = 0;
+
+            // Handle drag and drop
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.style.borderColor = '#007bff';
+            });
+
+            dropZone.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                dropZone.style.borderColor = '#ccc';
+            });
+
+            dropZone.addEventListener('drop', async (e) => {
+                e.preventDefault();
+                dropZone.style.borderColor = '#ccc';
+                const file = e.dataTransfer.files[0];
+                if (file && file.type === 'application/pdf') {
+                    handlePdfFile(file);
+                }
+            });
+
+            dropZone.addEventListener('click', () => {
+                fileInput.click();
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    handlePdfFile(file);
+                }
+            });
+
+            qualitySlider.addEventListener('input', updateEstimatedSize);
+            imageCompression.addEventListener('change', updateEstimatedSize);
+            fontSubsetting.addEventListener('change', updateEstimatedSize);
+
+            async function handlePdfFile(file) {
+                try {
+                    loading.style.display = 'block';
+                    progress.style.width = '30%';
+
+                    originalFileSize = file.size;
+                    originalSizeSpan.textContent = formatFileSize(originalFileSize);
+                    
+                    const arrayBuffer = await file.arrayBuffer();
+                    const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+                    currentPdfDoc = pdfDoc;
+
+                    fileInfo.style.display = 'block';
+                    compressionOptions.style.display = 'block';
+                    updateEstimatedSize();
+                    progress.style.width = '100%';
+
+                    // Preview first page
+                    await displayPreview(arrayBuffer);
+                } catch (error) {
+                    console.error('Error loading PDF:', error);
+                    alert('Error loading PDF file. Please try again.');
+                } finally {
+                    loading.style.display = 'none';
+                    progress.style.width = '0%';
+                }
+            }
+
+            function updateEstimatedSize() {
+                if (!originalFileSize) return;
+
+                const qualityFactor = 1 - (qualitySlider.value - 1) * 0.2;
+                let estimatedSize = originalFileSize * qualityFactor;
+
+                if (imageCompression.checked) {
+                    estimatedSize *= 0.8;
+                }
+                if (fontSubsetting.checked) {
+                    estimatedSize *= 0.9;
+                }
+
+                compressedSizeSpan.textContent = formatFileSize(estimatedSize);
+            }
+
+            async function displayPreview(arrayBuffer) {
+                const pdfjsLib = window['pdfjs-dist/build/pdf'];
+                const loadingTask = pdfjsLib.getDocument({data: arrayBuffer});
+                const pdf = await loadingTask.promise;
+                const page = await pdf.getPage(1);
+                
+                const canvas = document.getElementById('previewCanvas');
+                const context = canvas.getContext('2d');
+                const viewport = page.getViewport({scale: 1.5});
+                
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+                
+                await page.render({
+                    canvasContext: context,
+                    viewport: viewport
+                }).promise;
+            }
+
+            function formatFileSize(bytes) {
+                const units = ['B', 'KB', 'MB', 'GB'];
+                let size = bytes;
+                let unitIndex = 0;
+                
+                while (size >= 1024 && unitIndex < units.length - 1) {
+                    size /= 1024;
+                    unitIndex++;
+                }
+                
+                return `${size.toFixed(1)} ${units[unitIndex]}`;
+            }
+
+            compressButton.addEventListener('click', async () => {
+                if (!currentPdfDoc) {
+                    alert('Please upload a PDF first');
+                    return;
+                }
+
+                try {
+                    loading.style.display = 'block';
+                    progress.style.width = '30%';
+
+                    // Create a copy of the PDF for compression
+                    const pdfBytes = await currentPdfDoc.save({
+                        useObjectStreams: true,
+                        addDefaultPage: false,
+                        objectsPerTick: 50,
+                        updateFieldAppearances: false,
+                        compress: true
+                    });
+
+                    progress.style.width = '80%';
+
+                    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+                    const url = URL.createObjectURL(blob);
+                    
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'compressed_document.pdf';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+
+                    progress.style.width = '100%';
+                } catch (error) {
+                    console.error('Error compressing PDF:', error);
+                    alert('Error compressing PDF. Please try again.');
+                } finally {
+                    loading.style.display = 'none';
+                    progress.style.width = '0%';
+                }
+            });
+        });
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
+</body>
+</html> 

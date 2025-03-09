@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF to Text - ToolsHub</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
+    <style>
+        .converter-container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        .upload-area {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .upload-area:hover {
+            border-color: #6610f2;
+            background: #f8f9fa;
+        }
+
+        .upload-area i {
+            font-size: 3rem;
+            color: #6610f2;
+            margin-bottom: 1rem;
+        }
+
+        .preview-container {
+            display: none;
+            margin: 2rem 0;
+        }
+
+        .text-preview {
+            background: #f8f9fa;
+            padding: 2rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            max-height: 500px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            line-height: 1.5;
+        }
+
+        .page-divider {
+            border-top: 2px dashed #dee2e6;
+            margin: 2rem 0;
+            text-align: center;
+            position: relative;
+        }
+
+        .page-number {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 0 1rem;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        .extraction-options {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .option-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .option-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .option-group h3 {
+            margin-bottom: 1rem;
+            color: #333;
+            font-size: 1.1rem;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .radio-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .checkbox-group {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: #6610f2;
+            color: white;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            width: 100%;
+            font-size: 1.1rem;
+        }
+
+        .btn-primary:hover {
+            background: #520dc2;
+        }
+
+        .loading {
+            display: none;
+            margin: 1rem 0;
+            text-align: center;
+        }
+
+        .progress-container {
+            margin-top: 1rem;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: #f0f0f0;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+
+        .progress {
+            width: 0%;
+            height: 100%;
+            background: #6610f2;
+            transition: width 0.3s ease;
+        }
+
+        .status-text {
+            margin-top: 0.5rem;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: #e9ecef;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+        }
+
+        .file-info i {
+            font-size: 2rem;
+            color: #6610f2;
+        }
+
+        .file-details {
+            flex-grow: 1;
+        }
+
+        .file-name {
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+        }
+
+        .file-size {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #6610f2;
+            padding: 1rem 2rem;
+            border: 1px solid #6610f2;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex: 1;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-secondary:hover {
+            background: #f8f9fa;
+        }
+
+        .encoding-select {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            margin-top: 0.5rem;
+        }
+
+        .text-stats {
+            display: flex;
+            gap: 2rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 4px;
+            margin-top: 1rem;
+        }
+
+        .stat-item {
+            flex: 1;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #6610f2;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="logo">
+                <a href="../index.html">ToolsHub</a>
+            </div>
+            <ul class="nav-links">
+                <li><a href="../index.html">Home</a></li>
+                <li><a href="../image-tools.html">Image Tools</a></li>
+                <li><a href="../pdf-tools.html">PDF Tools</a></li>
+                <li><a href="../about.html">About</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class="page-header">
+            <div class="container">
+                <h1>PDF to Text Converter</h1>
+                <p>Extract text content from PDF documents with formatting options</p>
+            </div>
+        </section>
+
+        <div class="converter-container">
+            <div class="upload-area" id="dropZone">
+                <i class="fas fa-file-pdf"></i>
+                <h3>Drop your PDF here or click to upload</h3>
+                <p>Maximum file size: 100MB</p>
+                <input type="file" id="fileInput" accept=".pdf" style="display: none">
+            </div>
+
+            <div class="preview-container" id="previewContainer">
+                <div class="file-info" id="fileInfo">
+                    <i class="fas fa-file-pdf"></i>
+                    <div class="file-details">
+                        <div class="file-name" id="fileName">document.pdf</div>
+                        <div class="file-size" id="fileSize">0 MB</div>
+                    </div>
+                </div>
+
+                <div class="extraction-options">
+                    <div class="option-group">
+                        <h3>Output Format</h3>
+                        <div class="radio-group">
+                            <label class="radio-item">
+                                <input type="radio" name="format" value="plain" checked>
+                                Plain Text
+                            </label>
+                            <label class="radio-item">
+                                <input type="radio" name="format" value="formatted">
+                                Formatted Text
+                            </label>
+                            <label class="radio-item">
+                                <input type="radio" name="format" value="markdown">
+                                Markdown
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="option-group">
+                        <h3>Text Options</h3>
+                        <div class="checkbox-group">
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="preserveLineBreaks" checked>
+                                Preserve Line Breaks
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="preserveParagraphs" checked>
+                                Preserve Paragraphs
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="includePageNumbers" checked>
+                                Include Page Numbers
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="detectLists" checked>
+                                Detect Lists
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="option-group">
+                        <h3>Encoding</h3>
+                        <select class="encoding-select" id="encodingSelect">
+                            <option value="UTF-8">UTF-8</option>
+                            <option value="ASCII">ASCII</option>
+                            <option value="ISO-8859-1">ISO-8859-1</option>
+                            <option value="Windows-1252">Windows-1252</option>
+                        </select>
+                    </div>
+
+                    <div class="text-stats" id="textStats">
+                        <div class="stat-item">
+                            <div class="stat-value" id="pageCount">0</div>
+                            <div class="stat-label">Pages</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="wordCount">0</div>
+                            <div class="stat-label">Words</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="charCount">0</div>
+                            <div class="stat-label">Characters</div>
+                        </div>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button class="btn-primary" id="convertButton">
+                            <i class="fas fa-file-alt"></i> Convert to Text
+                        </button>
+                        <button class="btn-secondary" id="copyButton">
+                            <i class="fas fa-copy"></i> Copy Text
+                        </button>
+                    </div>
+                </div>
+
+                <div class="loading" id="loading">
+                    <div class="progress-container">
+                        <div class="progress-bar">
+                            <div class="progress" id="progress"></div>
+                        </div>
+                        <div class="status-text" id="statusText">Extracting text...</div>
+                    </div>
+                </div>
+
+                <div class="text-preview" id="textPreview">
+                    <!-- Extracted text will be displayed here -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <h2>ToolsHub</h2>
+                    <p>Free online tools for everyone</p>
+                </div>
+            </div>
+            <div class="copyright">
+                <p>&copy; 2025 ToolsHub. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const dropZone = document.getElementById('dropZone');
+            const fileInput = document.getElementById('fileInput');
+            const loading = document.getElementById('loading');
+            const progress = document.getElementById('progress');
+            const statusText = document.getElementById('statusText');
+            const previewContainer = document.getElementById('previewContainer');
+            const textPreview = document.getElementById('textPreview');
+            const fileName = document.getElementById('fileName');
+            const fileSize = document.getElementById('fileSize');
+            const convertButton = document.getElementById('convertButton');
+            const copyButton = document.getElementById('copyButton');
+            const pageCount = document.getElementById('pageCount');
+            const wordCount = document.getElementById('wordCount');
+            const charCount = document.getElementById('charCount');
+
+            let pdf = null;
+            let extractedText = '';
+
+            // Initialize PDF.js
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js';
+
+            // Handle drag and drop
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.style.borderColor = '#6610f2';
+            });
+
+            dropZone.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                dropZone.style.borderColor = '#ccc';
+            });
+
+            dropZone.addEventListener('drop', async (e) => {
+                e.preventDefault();
+                dropZone.style.borderColor = '#ccc';
+                const file = e.dataTransfer.files[0];
+                if (file && file.type === 'application/pdf') {
+                    handlePdfFile(file);
+                }
+            });
+
+            dropZone.addEventListener('click', () => {
+                fileInput.click();
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    handlePdfFile(file);
+                }
+            });
+
+            async function handlePdfFile(file) {
+                try {
+                    loading.style.display = 'block';
+                    progress.style.width = '30%';
+                    statusText.textContent = 'Loading PDF...';
+                    textPreview.textContent = '';
+                    extractedText = '';
+
+                    fileName.textContent = file.name;
+                    fileSize.textContent = formatFileSize(file.size);
+
+                    const arrayBuffer = await file.arrayBuffer();
+                    pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
+                    
+                    previewContainer.style.display = 'block';
+                    dropZone.style.display = 'none';
+                    
+                    pageCount.textContent = pdf.numPages;
+                    await extractText();
+                    
+                    progress.style.width = '100%';
+                } catch (error) {
+                    console.error('Error loading PDF:', error);
+                    alert('Error loading PDF file. Please try again.');
+                } finally {
+                    loading.style.display = 'none';
+                    progress.style.width = '0%';
+                }
+            }
+
+            async function extractText() {
+                const format = document.querySelector('input[name="format"]:checked').value;
+                const preserveLineBreaks = document.getElementById('preserveLineBreaks').checked;
+                const preserveParagraphs = document.getElementById('preserveParagraphs').checked;
+                const includePageNumbers = document.getElementById('includePageNumbers').checked;
+                const detectLists = document.getElementById('detectLists').checked;
+
+                let fullText = '';
+                let totalWords = 0;
+                let totalChars = 0;
+
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    progress.style.width = `${(i / pdf.numPages * 60) + 30}%`;
+                    statusText.textContent = `Extracting text from page ${i}...`;
+
+                    const page = await pdf.getPage(i);
+                    const textContent = await page.getTextContent();
+                    
+                    let pageText = '';
+                    let lastY;
+                    let lineText = '';
+
+                    // Process text items
+                    textContent.items.forEach((item, index) => {
+                        const y = Math.round(item.transform[5]);
+                        
+                        if (lastY !== undefined && y !== lastY) {
+                            if (preserveLineBreaks) {
+                                pageText += lineText + '\n';
+                            } else {
+                                pageText += lineText + ' ';
+                            }
+                            lineText = '';
+                        }
+                        
+                        lineText += item.str;
+                        lastY = y;
+                        
+                        if (index === textContent.items.length - 1) {
+                            pageText += lineText;
+                        }
+                    });
+
+                    // Format based on selected options
+                    if (format === 'formatted') {
+                        pageText = formatText(pageText, detectLists);
+                    } else if (format === 'markdown') {
+                        pageText = convertToMarkdown(pageText, detectLists);
+                    }
+
+                    if (includePageNumbers) {
+                        if (format === 'markdown') {
+                            fullText += `\n\n## Page ${i}\n\n${pageText}`;
+                        } else {
+                            fullText += `\n\n----- Page ${i} -----\n\n${pageText}`;
+                        }
+                    } else {
+                        fullText += (i > 1 ? '\n\n' : '') + pageText;
+                    }
+
+                    // Update statistics
+                    const words = pageText.trim().split(/\s+/).length;
+                    const chars = pageText.length;
+                    totalWords += words;
+                    totalChars += chars;
+                }
+
+                if (preserveParagraphs) {
+                    fullText = fullText.replace(/\n{3,}/g, '\n\n');
+                }
+
+                extractedText = fullText;
+                textPreview.textContent = fullText;
+                wordCount.textContent = totalWords;
+                charCount.textContent = totalChars;
+            }
+
+            function formatText(text, detectLists) {
+                if (detectLists) {
+                    // Detect numbered lists
+                    text = text.replace(/^\s*(\d+\.)\s+/gm, '\n$1 ');
+                    // Detect bullet points
+                    text = text.replace(/^\s*[•●○◦]\s+/gm, '\n• ');
+                }
+                
+                // Add proper spacing after punctuation
+                text = text.replace(/([.!?])\s*/g, '$1 ');
+                
+                return text;
+            }
+
+            function convertToMarkdown(text, detectLists) {
+                if (detectLists) {
+                    // Convert numbered lists
+                    text = text.replace(/^\s*(\d+\.)\s+/gm, '\n$1 ');
+                    // Convert bullet points to markdown
+                    text = text.replace(/^\s*[•●○◦]\s+/gm, '\n* ');
+                }
+                
+                // Convert basic formatting
+                text = text.replace(/\*\*([^*]+)\*\*/g, '**$1**'); // Bold
+                text = text.replace(/_([^_]+)_/g, '_$1_'); // Italic
+                
+                return text;
+            }
+
+            function formatFileSize(bytes) {
+                const units = ['B', 'KB', 'MB', 'GB'];
+                let size = bytes;
+                let unitIndex = 0;
+                
+                while (size >= 1024 && unitIndex < units.length - 1) {
+                    size /= 1024;
+                    unitIndex++;
+                }
+                
+                return `${size.toFixed(1)} ${units[unitIndex]}`;
+            }
+
+            convertButton.addEventListener('click', () => {
+                if (!pdf) {
+                    alert('Please upload a PDF first');
+                    return;
+                }
+                extractText();
+            });
+
+            copyButton.addEventListener('click', () => {
+                if (!extractedText) {
+                    alert('No text to copy');
+                    return;
+                }
+
+                navigator.clipboard.writeText(extractedText)
+                    .then(() => {
+                        const originalText = copyButton.innerHTML;
+                        copyButton.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                        setTimeout(() => {
+                            copyButton.innerHTML = originalText;
+                        }, 2000);
+                    })
+                    .catch(err => {
+                        console.error('Error copying text:', err);
+                        alert('Failed to copy text to clipboard');
+                    });
+            });
+
+            // Update preview when options change
+            document.querySelectorAll('input[name="format"], input[type="checkbox"], select')
+                .forEach(input => {
+                    input.addEventListener('change', () => {
+                        if (pdf) {
+                            extractText();
+                        }
+                    });
+                });
+        });
+    </script>
+</body>
+</html> 

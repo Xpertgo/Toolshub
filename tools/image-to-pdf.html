@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image to PDF Converter | ToolsHub</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .tool-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: var(--card-shadow);
+        }
+        
+        .tool-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .tool-header h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+        
+        .tool-description {
+            color: var(--light-text);
+            margin-bottom: 2rem;
+        }
+        
+        .image-preview-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: center;
+        }
+        
+        .image-item {
+            position: relative;
+            width: 150px;
+            height: 150px;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            overflow: hidden;
+            transition: transform 0.2s;
+        }
+        
+        .image-item:hover {
+            transform: scale(1.05);
+        }
+        
+        .image-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .image-item .remove-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(255, 0, 0, 0.7);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s;
+        }
+        
+        .image-item .remove-btn:hover {
+            background: rgba(255, 0, 0, 0.9);
+        }
+        
+        .pdf-settings {
+            background-color: var(--light-bg);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .settings-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .settings-group {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .drop-area {
+            border: 2px dashed var(--primary-color);
+            border-radius: 8px;
+            padding: 3rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+            background-color: var(--light-bg);
+        }
+        
+        .drop-area:hover, .drop-area.drag-over {
+            background-color: var(--hover-color);
+        }
+        
+        .drop-area i {
+            font-size: 48px;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+        
+        .drop-area p {
+            margin: 10px 0;
+            color: var(--light-text);
+        }
+        
+        .button-row {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 25px;
+        }
+        
+        .reorder-notice {
+            margin-top: 10px;
+            text-align: center;
+            color: var(--light-text);
+            font-style: italic;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        .form-control:focus {
+            border-color: var(--primary-color);
+            outline: none;
+        }
+        
+        .range-values {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 5px;
+            font-size: 14px;
+            color: var(--light-text);
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        /* Processing overlay */
+        .processing-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        
+        .processing-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            max-width: 400px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .spinner {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--primary-color);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 768px) {
+            .settings-row {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .button-row {
+                flex-direction: column;
+            }
+            
+            .button-row .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="logo">
+                <a href="../index.html">ToolsHub</a>
+            </div>
+            <ul class="nav-links">
+                <li><a href="../index.html">Home</a></li>
+                <li><a href="../image-tools.html" class="active">Image Tools</a></li>
+                <li><a href="../pdf-tools.html">PDF Tools</a></li>
+                <li><a href="../about.html">About</a></li>
+            </ul>
+            <div class="hamburger">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </div>
+        </nav>
+    </header>
+    
+    <main>
+        <section class="page-header">
+            <div class="container">
+                <h1>Image to PDF Converter</h1>
+                <p>Convert one or multiple images to PDF documents easily</p>
+            </div>
+        </section>
+
+        <section class="tool-section">
+            <div class="container">
+                <div class="tool-container">
+                    <div class="tool-header">
+                        <h2><i class="fas fa-file-pdf"></i> Image to PDF Converter</h2>
+                        <p class="tool-description">Convert one or multiple images to a PDF document with ease</p>
+                    </div>
+                    
+                    <div class="drop-area" id="dropArea">
+                        <i class="fas fa-upload"></i>
+                        <h3>Upload Images</h3>
+                        <p>Drag & drop images here or click to browse</p>
+                        <p class="file-types">Supported formats: JPEG, PNG, GIF, BMP</p>
+                        <input type="file" id="fileInput" accept="image/*" multiple style="display: none;">
+                    </div>
+                    
+                    <div class="image-preview-container" id="imagePreviewContainer"></div>
+                    
+                    <p class="reorder-notice" id="reorderNotice" style="display: none;">
+                        <i class="fas fa-info-circle"></i> Images will appear in the PDF in the order shown above
+                    </p>
+                    
+                    <div class="pdf-settings">
+                        <h3>PDF Settings</h3>
+                        
+                        <div class="settings-row">
+                            <div class="settings-group">
+                                <label for="pageFormat">Page Format:</label>
+                                <select id="pageFormat" class="form-control">
+                                    <option value="a4">A4</option>
+                                    <option value="letter">Letter</option>
+                                    <option value="legal">Legal</option>
+                                </select>
+                            </div>
+                            
+                            <div class="settings-group">
+                                <label for="orientation">Orientation:</label>
+                                <select id="orientation" class="form-control">
+                                    <option value="portrait">Portrait</option>
+                                    <option value="landscape">Landscape</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="settings-row">
+                            <div class="settings-group">
+                                <label for="pageLayout">Page Layout:</label>
+                                <select id="pageLayout" class="form-control">
+                                    <option value="onePerPage">One image per page</option>
+                                    <option value="grid">Multiple images per page</option>
+                                </select>
+                            </div>
+                            
+                            <div class="settings-group">
+                                <label for="fileName">File Name:</label>
+                                <input type="text" id="fileName" class="form-control" value="document.pdf">
+                            </div>
+                        </div>
+                        
+                        <div class="settings-row">
+                            <div class="settings-group">
+                                <label for="quality">Image Quality:</label>
+                                <input type="range" id="quality" min="0.5" max="1" step="0.05" value="0.95" class="form-control">
+                                <div class="range-values">
+                                    <span>Low</span>
+                                    <span style="margin-left: auto;">High</span>
+                                </div>
+                            </div>
+                            
+                            <div class="settings-group">
+                                <label for="margin">Page Margin (mm):</label>
+                                <input type="number" id="margin" min="0" max="50" value="10" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="button-row">
+                        <button id="convertBtn" class="btn btn-primary" disabled>
+                            <i class="fas fa-file-pdf"></i> Generate PDF
+                        </button>
+                        <button id="clearBtn" class="btn btn-secondary" disabled>
+                            <i class="fas fa-trash"></i> Clear All
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+    
+    <div class="ad-container">
+        <!-- AdSense Ad Unit -->
+        <ins class="adsbygoogle"
+             style="display:block"
+             data-ad-client="ca-pub-YOUR_ADSENSE_ID"
+             data-ad-slot="YOUR_AD_SLOT"
+             data-ad-format="auto"
+             data-full-width-responsive="true"></ins>
+        <script>
+             (adsbygoogle = window.adsbygoogle || []).push({});
+        </script>
+    </div>
+    
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <h2>ToolsHub</h2>
+                    <p>Free online tools for everyday tasks</p>
+                </div>
+                <div class="footer-links">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="../index.html">Home</a></li>
+                        <li><a href="../image-tools.html">Image Tools</a></li>
+                        <li><a href="../pdf-tools.html">PDF Tools</a></li>
+                        <li><a href="../about.html">About</a></li>
+                    </ul>
+                </div>
+                <div class="footer-contact">
+                    <h3>Contact</h3>
+                    <p>Email: info@toolshub.com</p>
+                    <div class="social-icons">
+                        <a href="#"><i class="fab fa-facebook"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 ToolsHub. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- Processing Overlay -->
+    <div class="processing-overlay" id="processingOverlay">
+        <div class="processing-content">
+            <div class="spinner"></div>
+            <h3>Processing...</h3>
+            <p>Creating your PDF document. Please wait.</p>
+        </div>
+    </div>
+    
+    <script src="../js/script.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Elements
+            const dropArea = document.getElementById('dropArea');
+            const fileInput = document.getElementById('fileInput');
+            const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+            const reorderNotice = document.getElementById('reorderNotice');
+            const convertBtn = document.getElementById('convertBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            const qualitySlider = document.getElementById('quality');
+            const pageFormatSelect = document.getElementById('pageFormat');
+            const orientationSelect = document.getElementById('orientation');
+            const pageLayoutSelect = document.getElementById('pageLayout');
+            const fileNameInput = document.getElementById('fileName');
+            const marginInput = document.getElementById('margin');
+            const processingOverlay = document.getElementById('processingOverlay');
+            
+            // Array to store the uploaded images
+            let uploadedImages = [];
+            
+            // Drop area event listeners
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropArea.addEventListener(eventName, highlight, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, unhighlight, false);
+            });
+            
+            function highlight() {
+                dropArea.classList.add('drag-over');
+            }
+            
+            function unhighlight() {
+                dropArea.classList.remove('drag-over');
+            }
+            
+            // Handle dropped files
+            dropArea.addEventListener('drop', handleDrop, false);
+            
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                handleFiles(files);
+            }
+            
+            // Handle file input change
+            dropArea.addEventListener('click', () => {
+                fileInput.click();
+            });
+            
+            fileInput.addEventListener('change', function() {
+                handleFiles(this.files);
+            });
+            
+            // Process uploaded files
+            function handleFiles(files) {
+                if (files.length === 0) return;
+                
+                const imageFiles = Array.from(files).filter(file => 
+                    file.type.startsWith('image/'));
+                
+                if (imageFiles.length === 0) {
+                    showNotification('Please upload valid image files.', 'error');
+                    return;
+                }
+                
+                imageFiles.forEach(file => {
+                    // Create an image element for each file
+                    const img = document.createElement('img');
+                    const reader = new FileReader();
+                    
+                    reader.onload = function(e) {
+                        img.src = e.target.result;
+                        img.onload = function() {
+                            // Add the loaded image to the array
+                            uploadedImages.push({
+                                element: img,
+                                name: file.name
+                            });
+                            
+                            // Update UI
+                            updateImagePreview();
+                            updateButtons();
+                        };
+                    };
+                    
+                    reader.readAsDataURL(file);
+                });
+            }
+            
+            // Update the image preview container
+            function updateImagePreview() {
+                imagePreviewContainer.innerHTML = '';
+                
+                uploadedImages.forEach((img, index) => {
+                    const imageItem = document.createElement('div');
+                    imageItem.className = 'image-item';
+                    
+                    const imgClone = img.element.cloneNode();
+                    imageItem.appendChild(imgClone);
+                    
+                    const removeBtn = document.createElement('button');
+                    removeBtn.className = 'remove-btn';
+                    removeBtn.innerHTML = '<i class="fas fa-times"></i>';
+                    removeBtn.addEventListener('click', () => {
+                        uploadedImages.splice(index, 1);
+                        updateImagePreview();
+                        updateButtons();
+                    });
+                    
+                    imageItem.appendChild(removeBtn);
+                    imagePreviewContainer.appendChild(imageItem);
+                });
+                
+                reorderNotice.style.display = uploadedImages.length > 1 ? 'block' : 'none';
+            }
+            
+            // Update button states
+            function updateButtons() {
+                convertBtn.disabled = uploadedImages.length === 0;
+                clearBtn.disabled = uploadedImages.length === 0;
+            }
+            
+            // Clear all images
+            clearBtn.addEventListener('click', () => {
+                uploadedImages = [];
+                updateImagePreview();
+                updateButtons();
+            });
+            
+            // Generate PDF
+            convertBtn.addEventListener('click', async () => {
+                if (uploadedImages.length === 0) return;
+                
+                processingOverlay.style.display = 'flex';
+                
+                try {
+                    // Get settings
+                    const settings = {
+                        format: pageFormatSelect.value,
+                        orientation: orientationSelect.value,
+                        pageMargin: parseInt(marginInput.value, 10),
+                        quality: parseFloat(qualitySlider.value),
+                        fileName: fileNameInput.value.endsWith('.pdf') ? 
+                            fileNameInput.value : fileNameInput.value + '.pdf',
+                        singlePage: pageLayoutSelect.value === 'grid'
+                    };
+                    
+                    // Extract image elements
+                    const imageElements = uploadedImages.map(img => img.element);
+                    
+                    // Convert to PDF
+                    const result = await convertMultipleImagesToPDF(imageElements, settings);
+                    
+                    if (result.error) {
+                        showNotification(result.error, 'error');
+                        return;
+                    }
+                    
+                    // Create download link
+                    const downloadLink = document.createElement('a');
+                    downloadLink.href = result.url;
+                    downloadLink.download = result.fileName;
+                    document.body.appendChild(downloadLink);
+                    downloadLink.click();
+                    document.body.removeChild(downloadLink);
+                    
+                    showNotification('PDF created successfully!', 'success');
+                } catch (error) {
+                    console.error('Error generating PDF:', error);
+                    showNotification('An error occurred while generating the PDF.', 'error');
+                } finally {
+                    processingOverlay.style.display = 'none';
+                }
+            });
+        });
+        
+        // Show notification function
+        function showNotification(message, type = 'info') {
+            // Create notification element if it doesn't exist
+            let notification = document.getElementById('notification');
+            
+            if (!notification) {
+                notification = document.createElement('div');
+                notification.id = 'notification';
+                notification.style.position = 'fixed';
+                notification.style.bottom = '20px';
+                notification.style.right = '20px';
+                notification.style.padding = '15px 20px';
+                notification.style.borderRadius = '5px';
+                notification.style.color = 'white';
+                notification.style.fontWeight = 'bold';
+                notification.style.zIndex = '9999';
+                notification.style.transition = 'opacity 0.3s';
+                document.body.appendChild(notification);
+            }
+            
+            // Set notification style based on type
+            switch (type) {
+                case 'success':
+                    notification.style.backgroundColor = '#2ecc71';
+                    break;
+                case 'error':
+                    notification.style.backgroundColor = '#e74c3c';
+                    break;
+                case 'warning':
+                    notification.style.backgroundColor = '#f39c12';
+                    break;
+                default:
+                    notification.style.backgroundColor = '#3498db';
+            }
+            
+            // Set notification message
+            notification.textContent = message;
+            notification.style.opacity = '1';
+            
+            // Hide notification after 3 seconds
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                setTimeout(() => {
+                    notification.remove();
+                }, 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

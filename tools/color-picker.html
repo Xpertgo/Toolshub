@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Color Picker - ToolsHub</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-YOUR_ADSENSE_ID" crossorigin="anonymous"></script>
+    <style>
+        .tool-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: var(--card-shadow);
+        }
+        
+        .tool-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .tool-header h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+        
+        .tool-description {
+            color: var(--light-text);
+            margin-bottom: 2rem;
+        }
+        
+        .drop-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 3rem;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .drop-area:hover, .drop-area.dragover {
+            border-color: var(--primary-color);
+            background-color: var(--hover-bg);
+        }
+        
+        .drop-area i {
+            font-size: 3rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .image-container {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .preview-container {
+            position: relative;
+            margin-bottom: 1.5rem;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .preview-image {
+            max-width: 100%;
+            display: block;
+            margin: 0 auto;
+        }
+        
+        .color-info {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+        
+        .dominant-colors {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 1rem;
+        }
+        
+        .color-swatch {
+            width: 100px;
+            height: 100px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            text-shadow: 0 0 3px rgba(0, 0, 0, 0.5);
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            position: relative;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .color-swatch:hover {
+            transform: scale(1.05);
+        }
+        
+        .color-swatch .hex {
+            font-weight: bold;
+        }
+        
+        .color-swatch .rgb {
+            font-size: 0.8em;
+            opacity: 0.8;
+        }
+        
+        .color-copy-message {
+            position: absolute;
+            bottom: -30px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 5px;
+            border-radius: 4px;
+            font-size: 12px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .crosshair {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border: 2px solid white;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 0 1px black;
+            pointer-events: none;
+            display: none;
+        }
+        
+        .picked-color {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            border-radius: 8px;
+            background-color: #f5f5f5;
+        }
+        
+        .color-display {
+            width: 40px;
+            height: 40px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .loading-spinner i {
+            font-size: 48px;
+            color: var(--primary-color);
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .no-colors {
+            text-align: center;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        
+        .instructions {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .instructions h3 {
+            margin-top: 0;
+        }
+        
+        .instructions ul {
+            padding-left: 20px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="logo">
+                <a href="../index.html">ToolsHub</a>
+            </div>
+            <ul class="nav-links">
+                <li><a href="../index.html">Home</a></li>
+                <li><a href="../image-tools.html" class="active">Image Tools</a></li>
+                <li><a href="../pdf-tools.html">PDF Tools</a></li>
+                <li><a href="../about.html">About</a></li>
+            </ul>
+            <div class="hamburger">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section class="page-header">
+            <div class="container">
+                <h1>Color Picker</h1>
+                <p>Extract colors from your images and discover dominant color palettes</p>
+            </div>
+        </section>
+
+        <section class="tool-section">
+            <div class="container">
+                <div class="tool-container">
+                    <div class="tool-header">
+                        <h2>Extract Colors From Images</h2>
+                        <p class="tool-description">Upload an image to extract dominant colors or click anywhere on the image to pick specific colors.</p>
+                    </div>
+
+                    <div class="instructions">
+                        <h3>How to use the Color Picker:</h3>
+                        <ul>
+                            <li>Upload an image by dragging and dropping or clicking the upload area</li>
+                            <li>Click anywhere on the image to pick specific colors</li>
+                            <li>View the dominant colors extracted from your image</li>
+                            <li>Click on any color swatch to copy its hex code to your clipboard</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="drop-area" id="uploadArea">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <h3>Drag & Drop your image here</h3>
+                        <p>or</p>
+                        <button class="btn" id="selectFileBtn">Browse Files</button>
+                        <input type="file" id="fileInput" class="file-input" accept="image/*">
+                    </div>
+                    
+                    <div class="loading-spinner" id="loadingSpinner">
+                        <i class="fas fa-spinner"></i>
+                        <p>Analyzing colors...</p>
+                    </div>
+                    
+                    <div class="image-container" id="imageContainer" style="display: none;">
+                        <h2>Your Image</h2>
+                        <div class="preview-container">
+                            <img id="previewImage" class="preview-image">
+                            <div class="crosshair" id="crosshair"></div>
+                        </div>
+                        
+                        <div class="color-info">
+                            <h3>Picked Color</h3>
+                            <div class="picked-color" id="pickedColor">
+                                <div class="color-display" id="pickedColorDisplay"></div>
+                                <div>
+                                    <div id="pickedColorHex">#FFFFFF</div>
+                                    <div id="pickedColorRgb">rgb(255, 255, 255)</div>
+                                </div>
+                                <button class="btn btn-small" id="copyPickedColorBtn">
+                                    <i class="fas fa-copy"></i> Copy
+                                </button>
+                            </div>
+                            
+                            <h3>Dominant Colors</h3>
+                            <div class="dominant-colors" id="dominantColors"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div class="ad-container">
+        <!-- AdSense Ad Unit -->
+        <ins class="adsbygoogle"
+             style="display:block"
+             data-ad-client="ca-pub-YOUR_ADSENSE_ID"
+             data-ad-slot="YOUR_AD_SLOT"
+             data-ad-format="auto"
+             data-full-width-responsive="true"></ins>
+        <script>
+             (adsbygoogle = window.adsbygoogle || []).push({});
+        </script>
+    </div>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <h2>ToolsHub</h2>
+                    <p>Free online tools for everyday tasks</p>
+                </div>
+                <div class="footer-links">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="../index.html">Home</a></li>
+                        <li><a href="../image-tools.html">Image Tools</a></li>
+                        <li><a href="../pdf-tools.html">PDF Tools</a></li>
+                        <li><a href="../about.html">About</a></li>
+                    </ul>
+                </div>
+                <div class="footer-contact">
+                    <h3>Contact</h3>
+                    <p>Email: info@toolshub.com</p>
+                    <div class="social-icons">
+                        <a href="#"><i class="fab fa-facebook"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 ToolsHub. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../js/script.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const uploadArea = document.getElementById('uploadArea');
+            const fileInput = document.getElementById('fileInput');
+            const selectFileBtn = document.getElementById('selectFileBtn');
+            const imageContainer = document.getElementById('imageContainer');
+            const previewImage = document.getElementById('previewImage');
+            const dominantColors = document.getElementById('dominantColors');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            const crosshair = document.getElementById('crosshair');
+            const pickedColorDisplay = document.getElementById('pickedColorDisplay');
+            const pickedColorHex = document.getElementById('pickedColorHex');
+            const pickedColorRgb = document.getElementById('pickedColorRgb');
+            const copyPickedColorBtn = document.getElementById('copyPickedColorBtn');
+            
+            // Event listeners for drag and drop
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            ['dragenter', 'dragover'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, highlight, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, unhighlight, false);
+            });
+            
+            function highlight() {
+                uploadArea.classList.add('dragover');
+            }
+            
+            function unhighlight() {
+                uploadArea.classList.remove('dragover');
+            }
+            
+            // Handle file drop
+            uploadArea.addEventListener('drop', handleDrop, false);
+            
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                
+                if (files.length > 0 && files[0].type.match('image.*')) {
+                    handleFiles(files);
+                }
+            }
+            
+            // Handle file selection via button
+            selectFileBtn.addEventListener('click', () => {
+                fileInput.click();
+            });
+            
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    handleFiles(e.target.files);
+                }
+            });
+            
+            // Process the uploaded file
+            function handleFiles(files) {
+                const file = files[0];
+                
+                if (!file.type.match('image.*')) {
+                    alert('Please upload an image file (JPG, PNG, etc.)');
+                    return;
+                }
+                
+                // Show loading spinner
+                loadingSpinner.style.display = 'block';
+                
+                // Read the file and process the image
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    previewImage.src = e.target.result;
+                    
+                    previewImage.onload = function() {
+                        // Clear previous data
+                        dominantColors.innerHTML = '';
+                        
+                        // Show the image container
+                        imageContainer.style.display = 'block';
+                        
+                        // Extract dominant colors
+                        extractColors(previewImage, 10).then(colors => {
+                            // Hide loading spinner
+                            loadingSpinner.style.display = 'none';
+                            
+                            // Display dominant colors
+                            displayDominantColors(colors);
+                        });
+                    };
+                };
+                
+                reader.readAsDataURL(file);
+            }
+            
+            // Display the extracted dominant colors
+            function displayDominantColors(colors) {
+                if (colors.length === 0) {
+                    dominantColors.innerHTML = '<div class="no-colors">No distinct colors found in the image.</div>';
+                    return;
+                }
+                
+                colors.forEach(color => {
+                    const swatch = document.createElement('div');
+                    swatch.className = 'color-swatch';
+                    swatch.style.backgroundColor = color.rgb;
+                    
+                    // Determine if text should be white or black based on color brightness
+                    const r = parseInt(color.hex.substr(1, 2), 16);
+                    const g = parseInt(color.hex.substr(3, 2), 16);
+                    const b = parseInt(color.hex.substr(5, 2), 16);
+                    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+                    const textColor = brightness > 128 ? 'black' : 'white';
+                    
+                    swatch.style.color = textColor;
+                    
+                    swatch.innerHTML = `
+                        <div class="hex">${color.hex}</div>
+                        <div class="rgb">${color.rgb}</div>
+                        <div class="color-copy-message">Copied!</div>
+                    `;
+                    
+                    // Add click event to copy the color value
+                    swatch.addEventListener('click', () => {
+                        navigator.clipboard.writeText(color.hex).then(() => {
+                            const message = swatch.querySelector('.color-copy-message');
+                            message.style.opacity = 1;
+                            setTimeout(() => {
+                                message.style.opacity = 0;
+                            }, 1500);
+                        });
+                    });
+                    
+                    dominantColors.appendChild(swatch);
+                });
+            }
+            
+            // Handle color picking from image
+            previewImage.addEventListener('click', handleImageClick);
+            previewImage.addEventListener('mousemove', showCrosshair);
+            previewImage.addEventListener('mouseout', hideCrosshair);
+            
+            function showCrosshair(e) {
+                const rect = previewImage.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                crosshair.style.left = x + 'px';
+                crosshair.style.top = y + 'px';
+                crosshair.style.display = 'block';
+            }
+            
+            function hideCrosshair() {
+                crosshair.style.display = 'none';
+            }
+            
+            function handleImageClick(e) {
+                const rect = previewImage.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                // Create a canvas to get the pixel color
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                canvas.width = previewImage.naturalWidth;
+                canvas.height = previewImage.naturalHeight;
+                
+                // Draw the image on the canvas
+                ctx.drawImage(previewImage, 0, 0);
+                
+                // Calculate the exact position in the original image
+                const scaleX = previewImage.naturalWidth / previewImage.width;
+                const scaleY = previewImage.naturalHeight / previewImage.height;
+                
+                const exactX = Math.floor(x * scaleX);
+                const exactY = Math.floor(y * scaleY);
+                
+                // Get color at the clicked point
+                const colorInfo = getColorAtPoint(canvas, exactX, exactY);
+                
+                // Update the UI
+                pickedColorDisplay.style.backgroundColor = colorInfo.hex;
+                pickedColorHex.textContent = colorInfo.hex;
+                pickedColorRgb.textContent = colorInfo.rgb;
+            }
+            
+            // Copy picked color to clipboard
+            copyPickedColorBtn.addEventListener('click', () => {
+                navigator.clipboard.writeText(pickedColorHex.textContent).then(() => {
+                    alert('Color code copied to clipboard!');
+                });
+            });
+            
+            // Mobile menu
+            const hamburger = document.querySelector('.hamburger');
+            const navLinks = document.querySelector('.nav-links');
+
+            if (hamburger) {
+                hamburger.addEventListener('click', () => {
+                    hamburger.classList.toggle('active');
+                    navLinks.classList.toggle('active');
+                });
+            }
+        });
+    </script>
+</body>
+</html>

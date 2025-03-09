@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Background Remover - ToolsHub</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-YOUR_ADSENSE_ID" crossorigin="anonymous"></script>
+    <style>
+        .tool-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: var(--card-shadow);
+        }
+        
+        .tool-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .tool-header h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+        
+        .tool-description {
+            color: var(--light-text);
+            margin-bottom: 2rem;
+        }
+        
+        .drop-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 3rem;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-bottom: 2rem;
+        }
+        
+        .drop-area:hover, .drop-area.drag-over {
+            border-color: var(--primary-color);
+            background-color: rgba(66, 133, 244, 0.05);
+        }
+        
+        .drop-area i {
+            font-size: 3rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .settings-panel {
+            background-color: var(--light-bg);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .settings-panel h3 {
+            margin-top: 0;
+            margin-bottom: 1rem;
+        }
+        
+        .settings-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .form-group label {
+            font-weight: 500;
+        }
+        
+        .form-group select, .form-group input {
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+        }
+        
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .slider-container input[type="range"] {
+            flex-grow: 1;
+        }
+        
+        .slider-value {
+            font-weight: 500;
+            min-width: 40px;
+            text-align: center;
+        }
+        
+        .btn-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .btn-row .btn {
+            flex: 1;
+        }
+        
+        .progress-container {
+            display: none;
+            margin: 2rem 0;
+        }
+        
+        .progress-bar {
+            height: 8px;
+            background-color: var(--light-bg);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .progress {
+            height: 100%;
+            background-color: var(--primary-color);
+            width: 0;
+            transition: width 0.3s ease;
+        }
+        
+        .result-container {
+            display: none;
+            margin-top: 2rem;
+        }
+        
+        .result-container.active {
+            display: block;
+        }
+        
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        
+        .comparison-item {
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            padding: 1rem;
+            background-color: white;
+        }
+        
+        .comparison-item h3 {
+            margin-top: 0;
+            margin-bottom: 1rem;
+        }
+        
+        .comparison-item img {
+            max-width: 100%;
+            border-radius: 4px;
+            background-image: linear-gradient(45deg, #f0f0f0 25%, transparent 25%), 
+                              linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), 
+                              linear-gradient(45deg, transparent 75%, #f0f0f0 75%), 
+                              linear-gradient(-45deg, transparent 75%, #f0f0f0 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+        }
+        
+        .checkboard-bg {
+            background-image: linear-gradient(45deg, #f0f0f0 25%, transparent 25%), 
+                              linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), 
+                              linear-gradient(45deg, transparent 75%, #f0f0f0 75%), 
+                              linear-gradient(-45deg, transparent 75%, #f0f0f0 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        @media (max-width: 768px) {
+            .comparison {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="logo">
+                <a href="../index.html">ToolsHub</a>
+            </div>
+            <ul class="nav-links">
+                <li><a href="../index.html">Home</a></li>
+                <li><a href="../image-tools.html" class="active">Image Tools</a></li>
+                <li><a href="../pdf-tools.html">PDF Tools</a></li>
+                <li><a href="../about.html">About</a></li>
+            </ul>
+            <div class="hamburger">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section class="page-header">
+            <div class="container">
+                <h1>Background Remover</h1>
+                <p>Remove background from images automatically</p>
+            </div>
+        </section>
+
+        <section class="tool-section">
+            <div class="container">
+                <div class="tool-container">
+                    <div class="tool-header">
+                        <h2>Remove Background from Images</h2>
+                        <p class="tool-description">Upload your image and our tool will automatically remove the background, creating a transparent PNG you can use in your designs.</p>
+                    </div>
+                    
+                    <div class="drop-area" id="dropArea">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <h3>Drag & Drop your image here</h3>
+                        <p>or</p>
+                        <button class="btn" id="browseBtn">Browse Files</button>
+                        <input type="file" id="fileInput" class="file-input" accept="image/*">
+                    </div>
+                    
+                    <div class="settings-panel" id="settingsPanel" style="display: none;">
+                        <h3>Background Removal Settings</h3>
+                        <div class="settings-form">
+                            <div class="form-group">
+                                <label for="removalMethod">Removal Method</label>
+                                <select id="removalMethod">
+                                    <option value="standard">Standard (Best for solid backgrounds)</option>
+                                    <option value="advanced" selected>Advanced (Best for complex backgrounds)</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="sensitivitySlider">Detection Sensitivity</label>
+                                <div class="slider-container">
+                                    <input type="range" id="sensitivitySlider" min="5" max="80" value="30" step="1">
+                                    <span class="slider-value" id="sensitivityValue">30</span>
+                                </div>
+                                <p class="slider-hint">Higher sensitivity removes more of the background but may affect the subject.</p>
+                            </div>
+                            
+                            <div class="btn-row">
+                                <button class="btn" id="removeBtn">Remove Background</button>
+                                <button class="btn btn-outline" id="resetBtn">Reset</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="progress-container" id="progressContainer">
+                        <p>Processing your image. Please wait...</p>
+                        <div class="progress-bar">
+                            <div class="progress" id="progressBar"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="result-container" id="resultContainer">
+                        <div class="result-header">
+                            <h3>Result</h3>
+                            <button class="btn download-btn" id="downloadBtn">
+                                <i class="fas fa-download"></i> Download
+                            </button>
+                        </div>
+                        
+                        <div class="comparison">
+                            <div class="comparison-item">
+                                <h3>Original</h3>
+                                <img id="originalImage" src="" alt="Original Image">
+                            </div>
+                            <div class="comparison-item">
+                                <h3>Background Removed</h3>
+                                <div class="checkboard-bg">
+                                    <img id="resultImage" src="" alt="Background Removed">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div class="ad-container">
+        <!-- AdSense Ad Unit -->
+        <ins class="adsbygoogle"
+             style="display:block"
+             data-ad-client="ca-pub-YOUR_ADSENSE_ID"
+             data-ad-slot="YOUR_AD_SLOT"
+             data-ad-format="auto"
+             data-full-width-responsive="true"></ins>
+        <script>
+             (adsbygoogle = window.adsbygoogle || []).push({});
+        </script>
+    </div>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <h2>ToolsHub</h2>
+                    <p>Free online tools for everyday tasks</p>
+                </div>
+                <div class="footer-links">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="../index.html">Home</a></li>
+                        <li><a href="../image-tools.html">Image Tools</a></li>
+                        <li><a href="../pdf-tools.html">PDF Tools</a></li>
+                        <li><a href="../about.html">About</a></li>
+                    </ul>
+                </div>
+                <div class="footer-contact">
+                    <h3>Contact</h3>
+                    <p>Email: info@toolshub.com</p>
+                    <div class="social-icons">
+                        <a href="#"><i class="fab fa-facebook"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 ToolsHub. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../js/script.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM Elements
+            const dropArea = document.getElementById('dropArea');
+            const fileInput = document.getElementById('fileInput');
+            const browseBtn = document.getElementById('browseBtn');
+            const settingsPanel = document.getElementById('settingsPanel');
+            const removeBtn = document.getElementById('removeBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            const progressContainer = document.getElementById('progressContainer');
+            const progressBar = document.getElementById('progressBar');
+            const resultContainer = document.getElementById('resultContainer');
+            const originalImage = document.getElementById('originalImage');
+            const resultImage = document.getElementById('resultImage');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const removalMethod = document.getElementById('removalMethod');
+            const sensitivitySlider = document.getElementById('sensitivitySlider');
+            const sensitivityValue = document.getElementById('sensitivityValue');
+            
+            // Variables
+            let selectedFile = null;
+            let processedImageBlob = null;
+            
+            // Event listeners for drag and drop
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropArea.addEventListener(eventName, highlight, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, unhighlight, false);
+            });
+            
+            function highlight() {
+                dropArea.classList.add('drag-over');
+            }
+            
+            function unhighlight() {
+                dropArea.classList.remove('drag-over');
+            }
+            
+            // Handle file drop
+            dropArea.addEventListener('drop', handleDrop, false);
+            
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                
+                if (files.length > 0 && files[0].type.match('image.*')) {
+                    handleFiles(files);
+                }
+            }
+            
+            // Handle file selection via button
+            browseBtn.addEventListener('click', () => {
+                fileInput.click();
+            });
+            
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    handleFiles(e.target.files);
+                }
+            });
+            
+            // Sensitivity slider
+            sensitivitySlider.addEventListener('input', () => {
+                sensitivityValue.textContent = sensitivitySlider.value;
+            });
+            
+            // Process the uploaded file
+            function handleFiles(files) {
+                selectedFile = files[0];
+                
+                if (!selectedFile.type.match('image.*')) {
+                    alert('Please upload an image file (JPG, PNG, etc.)');
+                    return;
+                }
+                
+                // Reset UI
+                resetUI();
+                
+                // Show settings panel
+                settingsPanel.style.display = 'block';
+                
+                // Read the file and show preview
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    originalImage.src = e.target.result;
+                };
+                reader.readAsDataURL(selectedFile);
+                
+                // Update dropArea to show file name
+                dropArea.querySelector('h3').textContent = selectedFile.name;
+                dropArea.querySelector('p').textContent = 'File size: ' + formatFileSize(selectedFile.size);
+            }
+            
+            // Remove background
+            removeBtn.addEventListener('click', async function() {
+                if (!selectedFile) return;
+                
+                // Show progress
+                progressContainer.style.display = 'block';
+                settingsPanel.style.display = 'none';
+                resultContainer.classList.remove('active');
+                
+                // Simulate progress
+                let progress = 0;
+                const progressInterval = setInterval(() => {
+                    progress += 5;
+                    if (progress > 90) {
+                        clearInterval(progressInterval);
+                    }
+                    progressBar.style.width = progress + '%';
+                }, 100);
+                
+                try {
+                    // Create an image element for processing
+                    const img = new Image();
+                    img.onload = async function() {
+                        let result;
+                        
+                        // Process based on selected method
+                        if (removalMethod.value === 'standard') {
+                            result = await removeBackground(img, parseInt(sensitivitySlider.value));
+                        } else {
+                            result = await removeBackgroundAdvanced(img, parseInt(sensitivitySlider.value));
+                        }
+                        
+                        // Update the result image
+                        resultImage.src = result.url;
+                        processedImageBlob = result.blob;
+                        
+                        // Complete the progress
+                        clearInterval(progressInterval);
+                        progressBar.style.width = '100%';
+                        
+                        // Show the result
+                        setTimeout(() => {
+                            progressContainer.style.display = 'none';
+                            resultContainer.classList.add('active');
+                        }, 500);
+                    };
+                    
+                    // Load the image from the file
+                    img.src = URL.createObjectURL(selectedFile);
+                } catch (error) {
+                    console.error('Error processing image:', error);
+                    alert('Error processing image. Please try again.');
+                    
+                    // Reset progress
+                    clearInterval(progressInterval);
+                    progressContainer.style.display = 'none';
+                    settingsPanel.style.display = 'block';
+                }
+            });
+            
+            // Reset button
+            resetBtn.addEventListener('click', function() {
+                fileInput.value = '';
+                selectedFile = null;
+                resetUI();
+                dropArea.querySelector('h3').textContent = 'Drag & Drop your image here';
+                dropArea.querySelector('p').textContent = 'or';
+            });
+            
+            // Download button
+            downloadBtn.addEventListener('click', function() {
+                if (!processedImageBlob) return;
+                
+                const filename = selectedFile.name.replace(/\.[^/.]+$/, '') + '_nobg.png';
+                downloadFile(processedImageBlob, filename);
+            });
+            
+            // Reset the UI
+            function resetUI() {
+                resultContainer.classList.remove('active');
+                progressContainer.style.display = 'none';
+                settingsPanel.style.display = 'none';
+                progressBar.style.width = '0%';
+                resultImage.src = '';
+                processedImageBlob = null;
+            }
+            
+            // Mobile menu
+            const hamburger = document.querySelector('.hamburger');
+            const navLinks = document.querySelector('.nav-links');
+
+            if (hamburger) {
+                hamburger.addEventListener('click', () => {
+                    hamburger.classList.toggle('active');
+                    navLinks.classList.toggle('active');
+                });
+            }
+        });
+    </script>
+</body>
+</html>

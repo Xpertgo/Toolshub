@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Page Extractor - ToolsHub</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <style>
+        .extractor-container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        .upload-area {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .upload-area:hover {
+            border-color: #007bff;
+            background: #f8f9fa;
+        }
+
+        .upload-area i {
+            font-size: 3rem;
+            color: #007bff;
+            margin-bottom: 1rem;
+        }
+
+        .preview-container {
+            display: none;
+            margin: 2rem 0;
+        }
+
+        .page-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .page-item {
+            position: relative;
+            background: white;
+            padding: 0.5rem;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease;
+        }
+
+        .page-item:hover {
+            transform: translateY(-2px);
+        }
+
+        .page-item.selected {
+            border: 2px solid #007bff;
+        }
+
+        .page-item canvas {
+            width: 100%;
+            height: auto;
+            border-radius: 4px;
+        }
+
+        .page-number {
+            position: absolute;
+            top: 0.5rem;
+            left: 0.5rem;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 0.2rem 0.5rem;
+            border-radius: 3px;
+            font-size: 0.8rem;
+        }
+
+        .page-checkbox {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .extraction-controls {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .selection-options {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .range-input {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .range-input input {
+            width: 80px;
+            padding: 0.3rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+
+        .btn-outline {
+            background: white;
+            color: #007bff;
+            padding: 0.8rem 1.5rem;
+            border: 1px solid #007bff;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline:hover {
+            background: #f8f9fa;
+        }
+
+        .loading {
+            display: none;
+            margin: 1rem 0;
+            text-align: center;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: #f0f0f0;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+
+        .progress {
+            width: 0%;
+            height: 100%;
+            background: #007bff;
+            transition: width 0.3s ease;
+        }
+
+        .selection-mode {
+            margin-bottom: 1rem;
+        }
+
+        .selection-mode select {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-top: 0.5rem;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .selected-count {
+            margin: 1rem 0;
+            padding: 0.5rem;
+            background: #e9ecef;
+            border-radius: 4px;
+            text-align: center;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="logo">
+                <a href="../index.html">ToolsHub</a>
+            </div>
+            <ul class="nav-links">
+                <li><a href="../index.html">Home</a></li>
+                <li><a href="../image-tools.html">Image Tools</a></li>
+                <li><a href="../pdf-tools.html">PDF Tools</a></li>
+                <li><a href="../about.html">About</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class="page-header">
+            <div class="container">
+                <h1>PDF Page Extractor</h1>
+                <p>Extract specific pages from your PDF documents</p>
+            </div>
+        </section>
+
+        <div class="extractor-container">
+            <div class="upload-area" id="dropZone">
+                <i class="fas fa-file-pdf"></i>
+                <h3>Drop your PDF here or click to upload</h3>
+                <p>Maximum file size: 100MB</p>
+                <input type="file" id="fileInput" accept=".pdf" style="display: none">
+            </div>
+
+            <div class="loading" id="loading">
+                <p>Processing PDF...</p>
+                <div class="progress-bar">
+                    <div class="progress" id="progress"></div>
+                </div>
+            </div>
+
+            <div class="preview-container" id="previewContainer">
+                <div class="extraction-controls">
+                    <div class="selection-mode">
+                        <label for="selectionMode">Selection Mode:</label>
+                        <select id="selectionMode" class="form-control">
+                            <option value="manual">Manual Selection</option>
+                            <option value="range">Page Range</option>
+                            <option value="even">Even Pages</option>
+                            <option value="odd">Odd Pages</option>
+                        </select>
+                    </div>
+
+                    <div id="rangeInputs" class="range-input" style="display: none;">
+                        <input type="number" id="startPage" min="1" placeholder="Start">
+                        <span>to</span>
+                        <input type="number" id="endPage" min="1" placeholder="End">
+                        <button class="btn-outline" id="applyRange">Apply Range</button>
+                    </div>
+
+                    <div class="selected-count">
+                        Selected: <span id="selectedCount">0</span> pages
+                    </div>
+
+                    <div class="action-buttons">
+                        <button class="btn-primary" id="extractButton">
+                            <i class="fas fa-file-export"></i> Extract Pages
+                        </button>
+                        <button class="btn-outline" id="selectAllButton">
+                            <i class="fas fa-check-square"></i> Select All
+                        </button>
+                        <button class="btn-outline" id="clearSelectionButton">
+                            <i class="fas fa-times"></i> Clear Selection
+                        </button>
+                    </div>
+                </div>
+
+                <div class="page-grid" id="pageGrid">
+                    <!-- Page previews will be added here -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <h2>ToolsHub</h2>
+                    <p>Free online tools for everyone</p>
+                </div>
+            </div>
+            <div class="copyright">
+                <p>&copy; 2025 ToolsHub. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const dropZone = document.getElementById('dropZone');
+            const fileInput = document.getElementById('fileInput');
+            const loading = document.getElementById('loading');
+            const progress = document.getElementById('progress');
+            const previewContainer = document.getElementById('previewContainer');
+            const pageGrid = document.getElementById('pageGrid');
+            const selectionMode = document.getElementById('selectionMode');
+            const rangeInputs = document.getElementById('rangeInputs');
+            const startPage = document.getElementById('startPage');
+            const endPage = document.getElementById('endPage');
+            const applyRange = document.getElementById('applyRange');
+            const selectedCount = document.getElementById('selectedCount');
+            const extractButton = document.getElementById('extractButton');
+            const selectAllButton = document.getElementById('selectAllButton');
+            const clearSelectionButton = document.getElementById('clearSelectionButton');
+
+            let pdf = null;
+            let selectedPages = new Set();
+
+            // Initialize PDF.js
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js';
+
+            // Handle drag and drop
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.style.borderColor = '#007bff';
+            });
+
+            dropZone.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                dropZone.style.borderColor = '#ccc';
+            });
+
+            dropZone.addEventListener('drop', async (e) => {
+                e.preventDefault();
+                dropZone.style.borderColor = '#ccc';
+                const file = e.dataTransfer.files[0];
+                if (file && file.type === 'application/pdf') {
+                    handlePdfFile(file);
+                }
+            });
+
+            dropZone.addEventListener('click', () => {
+                fileInput.click();
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    handlePdfFile(file);
+                }
+            });
+
+            async function handlePdfFile(file) {
+                try {
+                    loading.style.display = 'block';
+                    progress.style.width = '30%';
+                    selectedPages.clear();
+                    pageGrid.innerHTML = '';
+
+                    const arrayBuffer = await file.arrayBuffer();
+                    pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
+                    
+                    previewContainer.style.display = 'block';
+                    dropZone.style.display = 'none';
+                    
+                    startPage.max = pdf.numPages;
+                    endPage.max = pdf.numPages;
+                    
+                    // Generate page previews
+                    for (let i = 1; i <= pdf.numPages; i++) {
+                        progress.style.width = `${(i / pdf.numPages * 60) + 30}%`;
+                        await addPagePreview(i);
+                    }
+                    
+                    progress.style.width = '100%';
+                } catch (error) {
+                    console.error('Error loading PDF:', error);
+                    alert('Error loading PDF file. Please try again.');
+                } finally {
+                    loading.style.display = 'none';
+                    progress.style.width = '0%';
+                }
+            }
+
+            async function addPagePreview(pageNumber) {
+                const page = await pdf.getPage(pageNumber);
+                const viewport = page.getViewport({ scale: 0.3 });
+                
+                const pageItem = document.createElement('div');
+                pageItem.className = 'page-item';
+                
+                const canvas = document.createElement('canvas');
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
+                
+                const context = canvas.getContext('2d');
+                await page.render({
+                    canvasContext: context,
+                    viewport: viewport
+                }).promise;
+                
+                const pageNum = document.createElement('div');
+                pageNum.className = 'page-number';
+                pageNum.textContent = pageNumber;
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.className = 'page-checkbox';
+                checkbox.dataset.page = pageNumber;
+                
+                checkbox.addEventListener('change', () => {
+                    if (checkbox.checked) {
+                        selectedPages.add(pageNumber);
+                        pageItem.classList.add('selected');
+                    } else {
+                        selectedPages.delete(pageNumber);
+                        pageItem.classList.remove('selected');
+                    }
+                    updateSelectedCount();
+                });
+                
+                pageItem.appendChild(canvas);
+                pageItem.appendChild(pageNum);
+                pageItem.appendChild(checkbox);
+                pageGrid.appendChild(pageItem);
+            }
+
+            function updateSelectedCount() {
+                selectedCount.textContent = selectedPages.size;
+            }
+
+            selectionMode.addEventListener('change', () => {
+                rangeInputs.style.display = 
+                    selectionMode.value === 'range' ? 'flex' : 'none';
+                
+                if (selectionMode.value === 'even' || selectionMode.value === 'odd') {
+                    applySelectionMode();
+                }
+            });
+
+            function applySelectionMode() {
+                selectedPages.clear();
+                const checkboxes = document.querySelectorAll('.page-checkbox');
+                
+                checkboxes.forEach(checkbox => {
+                    const pageNum = parseInt(checkbox.dataset.page);
+                    const isEven = pageNum % 2 === 0;
+                    
+                    if (selectionMode.value === 'even' && isEven ||
+                        selectionMode.value === 'odd' && !isEven) {
+                        checkbox.checked = true;
+                        selectedPages.add(pageNum);
+                        checkbox.parentElement.classList.add('selected');
+                    } else {
+                        checkbox.checked = false;
+                        checkbox.parentElement.classList.remove('selected');
+                    }
+                });
+                
+                updateSelectedCount();
+            }
+
+            applyRange.addEventListener('click', () => {
+                const start = parseInt(startPage.value);
+                const end = parseInt(endPage.value);
+                
+                if (isNaN(start) || isNaN(end) || start > end) {
+                    alert('Please enter a valid page range');
+                    return;
+                }
+                
+                selectedPages.clear();
+                const checkboxes = document.querySelectorAll('.page-checkbox');
+                
+                checkboxes.forEach(checkbox => {
+                    const pageNum = parseInt(checkbox.dataset.page);
+                    if (pageNum >= start && pageNum <= end) {
+                        checkbox.checked = true;
+                        selectedPages.add(pageNum);
+                        checkbox.parentElement.classList.add('selected');
+                    } else {
+                        checkbox.checked = false;
+                        checkbox.parentElement.classList.remove('selected');
+                    }
+                });
+                
+                updateSelectedCount();
+            });
+
+            selectAllButton.addEventListener('click', () => {
+                const checkboxes = document.querySelectorAll('.page-checkbox');
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = true;
+                    selectedPages.add(parseInt(checkbox.dataset.page));
+                    checkbox.parentElement.classList.add('selected');
+                });
+                updateSelectedCount();
+            });
+
+            clearSelectionButton.addEventListener('click', () => {
+                const checkboxes = document.querySelectorAll('.page-checkbox');
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = false;
+                    checkbox.parentElement.classList.remove('selected');
+                });
+                selectedPages.clear();
+                updateSelectedCount();
+            });
+
+            extractButton.addEventListener('click', async () => {
+                if (selectedPages.size === 0) {
+                    alert('Please select at least one page to extract');
+                    return;
+                }
+
+                try {
+                    loading.style.display = 'block';
+                    progress.style.width = '30%';
+
+                    const pdfDoc = await PDFLib.PDFDocument.load(await pdf.getData());
+                    const newPdf = await PDFLib.PDFDocument.create();
+                    
+                    progress.style.width = '50%';
+
+                    // Sort pages to maintain order
+                    const sortedPages = Array.from(selectedPages).sort((a, b) => a - b);
+                    
+                    for (const pageNum of sortedPages) {
+                        const [page] = await newPdf.copyPages(pdfDoc, [pageNum - 1]);
+                        newPdf.addPage(page);
+                    }
+
+                    progress.style.width = '80%';
+
+                    const pdfBytes = await newPdf.save();
+                    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+                    const url = URL.createObjectURL(blob);
+                    
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'extracted_pages.pdf';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+
+                    progress.style.width = '100%';
+                } catch (error) {
+                    console.error('Error extracting pages:', error);
+                    alert('Error extracting pages. Please try again.');
+                } finally {
+                    loading.style.display = 'none';
+                    progress.style.width = '0%';
+                }
+            });
+        });
+    </script>
+</body>
+</html> 

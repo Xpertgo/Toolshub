@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Editor - ToolsHub</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+    <style>
+        .editor-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        .upload-area {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .upload-area:hover {
+            border-color: #007bff;
+            background: #f8f9fa;
+        }
+
+        .upload-area i {
+            font-size: 3rem;
+            color: #007bff;
+            margin-bottom: 1rem;
+        }
+
+        .editor-workspace {
+            display: none;
+            grid-template-columns: 250px 1fr;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .toolbar {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            height: fit-content;
+        }
+
+        .tool-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .tool-section h3 {
+            margin-bottom: 1rem;
+            color: #333;
+            font-size: 1.1rem;
+        }
+
+        .tool-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+        }
+
+        .tool-btn {
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .tool-btn:hover {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+
+        .tool-btn.active {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+
+        .canvas-container {
+            position: relative;
+            overflow: auto;
+            max-height: 800px;
+            background: #f0f0f0;
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        #pdfCanvas {
+            margin: 0 auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+        }
+
+        .page-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            margin: 1rem 0;
+            padding: 0.5rem;
+            background: white;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .page-controls button {
+            padding: 0.5rem 1rem;
+            border: none;
+            background: #007bff;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .page-controls button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .color-picker {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+        }
+
+        .size-slider {
+            width: 100%;
+            margin: 0.5rem 0;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            width: 100%;
+            margin-top: 1rem;
+        }
+
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+
+        .loading {
+            display: none;
+            margin: 1rem 0;
+            text-align: center;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: #f0f0f0;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+
+        .progress {
+            width: 0%;
+            height: 100%;
+            background: #007bff;
+            transition: width 0.3s ease;
+        }
+
+        .text-input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+        }
+
+        .font-select {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="logo">
+                <a href="../index.html">ToolsHub</a>
+            </div>
+            <ul class="nav-links">
+                <li><a href="../index.html">Home</a></li>
+                <li><a href="../image-tools.html">Image Tools</a></li>
+                <li><a href="../pdf-tools.html">PDF Tools</a></li>
+                <li><a href="../about.html">About</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class="page-header">
+            <div class="container">
+                <h1>PDF Editor</h1>
+                <p>Add text, shapes, and annotations to your PDF documents</p>
+            </div>
+        </section>
+
+        <div class="editor-container">
+            <div class="upload-area" id="dropZone">
+                <i class="fas fa-file-pdf"></i>
+                <h3>Drop your PDF here or click to upload</h3>
+                <p>Maximum file size: 100MB</p>
+                <input type="file" id="fileInput" accept=".pdf" style="display: none">
+            </div>
+
+            <div class="loading" id="loading">
+                <p>Loading PDF...</p>
+                <div class="progress-bar">
+                    <div class="progress" id="progress"></div>
+                </div>
+            </div>
+
+            <div class="editor-workspace" id="editorWorkspace">
+                <div class="toolbar">
+                    <div class="tool-section">
+                        <h3>Tools</h3>
+                        <div class="tool-grid">
+                            <button class="tool-btn" data-tool="select">
+                                <i class="fas fa-mouse-pointer"></i>
+                            </button>
+                            <button class="tool-btn" data-tool="text">
+                                <i class="fas fa-font"></i>
+                            </button>
+                            <button class="tool-btn" data-tool="draw">
+                                <i class="fas fa-pencil-alt"></i>
+                            </button>
+                            <button class="tool-btn" data-tool="rectangle">
+                                <i class="far fa-square"></i>
+                            </button>
+                            <button class="tool-btn" data-tool="circle">
+                                <i class="far fa-circle"></i>
+                            </button>
+                            <button class="tool-btn" data-tool="line">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                            <button class="tool-btn" data-tool="highlight">
+                                <i class="fas fa-highlighter"></i>
+                            </button>
+                            <button class="tool-btn" data-tool="image">
+                                <i class="far fa-image"></i>
+                            </button>
+                            <button class="tool-btn" data-tool="eraser">
+                                <i class="fas fa-eraser"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="tool-section">
+                        <h3>Properties</h3>
+                        <input type="color" id="colorPicker" class="color-picker" value="#000000">
+                        <input type="range" id="sizeSlider" class="size-slider" min="1" max="50" value="5">
+                        <select id="fontSelect" class="font-select">
+                            <option value="Arial">Arial</option>
+                            <option value="Times New Roman">Times New Roman</option>
+                            <option value="Courier New">Courier New</option>
+                            <option value="Georgia">Georgia</option>
+                            <option value="Verdana">Verdana</option>
+                        </select>
+                        <input type="text" id="textInput" class="text-input" placeholder="Enter text..." style="display: none">
+                    </div>
+
+                    <div class="tool-section">
+                        <h3>Actions</h3>
+                        <button class="btn-primary" id="undoButton">
+                            <i class="fas fa-undo"></i> Undo
+                        </button>
+                        <button class="btn-primary" id="redoButton">
+                            <i class="fas fa-redo"></i> Redo
+                        </button>
+                        <button class="btn-primary" id="deleteButton">
+                            <i class="fas fa-trash"></i> Delete Selected
+                        </button>
+                        <button class="btn-primary" id="saveButton">
+                            <i class="fas fa-save"></i> Save PDF
+                        </button>
+                    </div>
+                </div>
+
+                <div class="canvas-container">
+                    <div class="page-controls">
+                        <button id="prevPage" disabled>
+                            <i class="fas fa-chevron-left"></i> Previous
+                        </button>
+                        <span>Page <span id="currentPage">1</span> of <span id="totalPages">1</span></span>
+                        <button id="nextPage" disabled>
+                            Next <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                    <canvas id="pdfCanvas"></canvas>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <h2>ToolsHub</h2>
+                    <p>Free online tools for everyone</p>
+                </div>
+            </div>
+            <div class="copyright">
+                <p>&copy; 2025 ToolsHub. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const dropZone = document.getElementById('dropZone');
+            const fileInput = document.getElementById('fileInput');
+            const loading = document.getElementById('loading');
+            const progress = document.getElementById('progress');
+            const editorWorkspace = document.getElementById('editorWorkspace');
+            const canvas = document.getElementById('pdfCanvas');
+            const prevPageBtn = document.getElementById('prevPage');
+            const nextPageBtn = document.getElementById('nextPage');
+            const currentPageSpan = document.getElementById('currentPage');
+            const totalPagesSpan = document.getElementById('totalPages');
+            const colorPicker = document.getElementById('colorPicker');
+            const sizeSlider = document.getElementById('sizeSlider');
+            const fontSelect = document.getElementById('fontSelect');
+            const textInput = document.getElementById('textInput');
+            const toolButtons = document.querySelectorAll('.tool-btn');
+            
+            let pdf = null;
+            let currentPage = 1;
+            let fabricCanvas = null;
+            let currentTool = 'select';
+            let isDrawing = false;
+            let drawingPath = null;
+
+            // Initialize PDF.js
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js';
+
+            // Initialize Fabric.js canvas
+            function initFabricCanvas() {
+                fabricCanvas = new fabric.Canvas('pdfCanvas', {
+                    isDrawingMode: false,
+                    selection: true
+                });
+
+                fabricCanvas.freeDrawingBrush.width = parseInt(sizeSlider.value, 10);
+                fabricCanvas.freeDrawingBrush.color = colorPicker.value;
+            }
+
+            // Handle drag and drop
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.style.borderColor = '#007bff';
+            });
+
+            dropZone.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                dropZone.style.borderColor = '#ccc';
+            });
+
+            dropZone.addEventListener('drop', async (e) => {
+                e.preventDefault();
+                dropZone.style.borderColor = '#ccc';
+                const file = e.dataTransfer.files[0];
+                if (file && file.type === 'application/pdf') {
+                    handlePdfFile(file);
+                }
+            });
+
+            dropZone.addEventListener('click', () => {
+                fileInput.click();
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    handlePdfFile(file);
+                }
+            });
+
+            async function handlePdfFile(file) {
+                try {
+                    loading.style.display = 'block';
+                    progress.style.width = '30%';
+
+                    const arrayBuffer = await file.arrayBuffer();
+                    pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
+                    
+                    totalPagesSpan.textContent = pdf.numPages;
+                    editorWorkspace.style.display = 'grid';
+                    dropZone.style.display = 'none';
+                    
+                    initFabricCanvas();
+                    await renderPage(1);
+                    
+                    prevPageBtn.disabled = currentPage === 1;
+                    nextPageBtn.disabled = currentPage === pdf.numPages;
+                    
+                    progress.style.width = '100%';
+                } catch (error) {
+                    console.error('Error loading PDF:', error);
+                    alert('Error loading PDF file. Please try again.');
+                } finally {
+                    loading.style.display = 'none';
+                    progress.style.width = '0%';
+                }
+            }
+
+            async function renderPage(pageNumber) {
+                const page = await pdf.getPage(pageNumber);
+                const viewport = page.getViewport({scale: 1.5});
+                
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+                fabricCanvas.setDimensions({
+                    width: viewport.width,
+                    height: viewport.height
+                });
+                
+                const renderContext = {
+                    canvasContext: canvas.getContext('2d'),
+                    viewport: viewport
+                };
+                
+                await page.render(renderContext).promise;
+                currentPage = pageNumber;
+                currentPageSpan.textContent = pageNumber;
+            }
+
+            // Tool selection
+            toolButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    toolButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    currentTool = button.dataset.tool;
+                    
+                    fabricCanvas.isDrawingMode = currentTool === 'draw';
+                    textInput.style.display = currentTool === 'text' ? 'block' : 'none';
+                });
+            });
+
+            // Property changes
+            colorPicker.addEventListener('change', () => {
+                fabricCanvas.freeDrawingBrush.color = colorPicker.value;
+                if (fabricCanvas.getActiveObject()) {
+                    fabricCanvas.getActiveObject().set('fill', colorPicker.value);
+                    fabricCanvas.renderAll();
+                }
+            });
+
+            sizeSlider.addEventListener('input', () => {
+                fabricCanvas.freeDrawingBrush.width = parseInt(sizeSlider.value, 10);
+                if (fabricCanvas.getActiveObject()) {
+                    fabricCanvas.getActiveObject().set('fontSize', parseInt(sizeSlider.value, 10));
+                    fabricCanvas.renderAll();
+                }
+            });
+
+            // Add text
+            textInput.addEventListener('keyup', (e) => {
+                if (e.key === 'Enter' && textInput.value.trim()) {
+                    const text = new fabric.Text(textInput.value, {
+                        left: 100,
+                        top: 100,
+                        fontSize: parseInt(sizeSlider.value, 10),
+                        fill: colorPicker.value,
+                        fontFamily: fontSelect.value
+                    });
+                    fabricCanvas.add(text);
+                    textInput.value = '';
+                }
+            });
+
+            // Navigation
+            prevPageBtn.addEventListener('click', async () => {
+                if (currentPage > 1) {
+                    await renderPage(currentPage - 1);
+                    prevPageBtn.disabled = currentPage === 1;
+                    nextPageBtn.disabled = false;
+                }
+            });
+
+            nextPageBtn.addEventListener('click', async () => {
+                if (currentPage < pdf.numPages) {
+                    await renderPage(currentPage + 1);
+                    nextPageBtn.disabled = currentPage === pdf.numPages;
+                    prevPageBtn.disabled = false;
+                }
+            });
+
+            // Actions
+            document.getElementById('undoButton').addEventListener('click', () => {
+                if (fabricCanvas._objects.length > 0) {
+                    fabricCanvas.remove(fabricCanvas._objects[fabricCanvas._objects.length - 1]);
+                }
+            });
+
+            document.getElementById('deleteButton').addEventListener('click', () => {
+                const activeObject = fabricCanvas.getActiveObject();
+                if (activeObject) {
+                    fabricCanvas.remove(activeObject);
+                }
+            });
+
+            document.getElementById('saveButton').addEventListener('click', () => {
+                const dataUrl = fabricCanvas.toDataURL({
+                    format: 'png',
+                    quality: 1
+                });
+                const a = document.createElement('a');
+                a.href = dataUrl;
+                a.download = 'edited_page.png';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            });
+        });
+    </script>
+</body>
+</html> 

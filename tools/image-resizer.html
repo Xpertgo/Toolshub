@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Resizer - ToolsHub</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-YOUR_ADSENSE_ID" crossorigin="anonymous"></script>
+    <style>
+        .tool-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: var(--card-shadow);
+        }
+        
+        .tool-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .tool-header h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+        
+        .tool-description {
+            color: var(--light-text);
+            margin-bottom: 2rem;
+        }
+        
+        .drop-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 3rem;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-bottom: 2rem;
+        }
+        
+        .drop-area:hover, .drop-area.drag-over {
+            border-color: var(--primary-color);
+            background-color: rgba(66, 133, 244, 0.05);
+        }
+        
+        .drop-area i {
+            font-size: 3rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .settings {
+            margin-bottom: 2rem;
+        }
+        
+        .settings h3 {
+            margin-bottom: 1rem;
+        }
+        
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        
+        .setting-item {
+            margin-bottom: 1rem;
+        }
+        
+        .setting-item label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        
+        .setting-item input, .setting-item select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+        }
+        
+        .aspect-ratio-container {
+            display: flex;
+            align-items: center;
+            margin-top: 1rem;
+        }
+        
+        .aspect-ratio-container input[type="checkbox"] {
+            margin-right: 8px;
+        }
+        
+        .result-container {
+            display: none;
+            margin-top: 2rem;
+        }
+        
+        .result-container.active {
+            display: block;
+        }
+        
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        
+        .comparison-item {
+            text-align: center;
+        }
+        
+        .comparison-item h3 {
+            margin-bottom: 0.5rem;
+        }
+        
+        .comparison-item img {
+            max-width: 100%;
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+        }
+        
+        .comparison-item p {
+            font-size: 0.9rem;
+            color: var(--light-text);
+        }
+        
+        .download-btn {
+            margin-top: 1rem;
+            width: 100%;
+        }
+        
+        .progress-bar {
+            height: 6px;
+            background-color: #f0f0f0;
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+        
+        .progress {
+            height: 100%;
+            background-color: var(--primary-color);
+            width: 0;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="logo">
+                <a href="../index.html">ToolsHub</a>
+            </div>
+            <ul class="nav-links">
+                <li><a href="../index.html">Home</a></li>
+                <li><a href="../image-tools.html" class="active">Image Tools</a></li>
+                <li><a href="../pdf-tools.html">PDF Tools</a></li>
+                <li><a href="../about.html">About</a></li>
+            </ul>
+            <div class="hamburger">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section class="page-header">
+            <div class="container">
+                <h1>Image Resizer</h1>
+                <p>Resize your images to specific dimensions</p>
+            </div>
+        </section>
+
+        <section class="tool-section">
+            <div class="container">
+                <div class="tool-container">
+                    <div class="tool-header">
+                        <h2>Resize Your Images</h2>
+                        <p class="tool-description">Change image dimensions for social media, websites, or printing. Supports JPG, PNG, WebP, and more.</p>
+                    </div>
+                    
+                    <div class="drop-area" id="dropArea">
+                        <i class="fas fa-expand"></i>
+                        <h3>Drag & Drop your image here</h3>
+                        <p>or</p>
+                        <button class="btn" id="browseBtn">Browse Files</button>
+                        <input type="file" id="fileInput" class="file-input" accept="image/*">
+                    </div>
+                    
+                    <div class="settings">
+                        <h3>Resize Settings</h3>
+                        <div class="settings-grid">
+                            <div class="setting-item">
+                                <label for="originalWidth">Original Width (px)</label>
+                                <input type="text" id="originalWidth" readonly>
+                            </div>
+                            <div class="setting-item">
+                                <label for="originalHeight">Original Height (px)</label>
+                                <input type="text" id="originalHeight" readonly>
+                            </div>
+                            <div class="setting-item">
+                                <label for="newWidth">New Width (px)</label>
+                                <input type="number" id="newWidth" min="1">
+                            </div>
+                            <div class="setting-item">
+                                <label for="newHeight">New Height (px)</label>
+                                <input type="number" id="newHeight" min="1">
+                            </div>
+                        </div>
+                        <div class="aspect-ratio-container">
+                            <input type="checkbox" id="preserveAspectRatio" checked>
+                            <label for="preserveAspectRatio">Preserve aspect ratio</label>
+                        </div>
+                        <div class="aspect-ratio-container">
+                            <input type="checkbox" id="applySmoothing" checked>
+                            <label for="applySmoothing">Apply image smoothing</label>
+                        </div>
+                    </div>
+                    
+                    <button class="btn" id="resizeBtn" disabled>Resize Image</button>
+                    
+                    <div class="progress-container" style="display: none;">
+                        <p>Processing...</p>
+                        <div class="progress-bar">
+                            <div class="progress" id="progressBar"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="result-container" id="resultContainer">
+                        <div class="result-header">
+                            <h3>Resize Results</h3>
+                        </div>
+                        
+                        <div class="comparison">
+                            <div class="comparison-item">
+                                <h3>Original</h3>
+                                <img id="originalImage" src="" alt="Original Image">
+                                <p id="originalSize"></p>
+                            </div>
+                            <div class="comparison-item">
+                                <h3>Resized</h3>
+                                <img id="resizedImage" src="" alt="Resized Image">
+                                <p id="resizedSize"></p>
+                            </div>
+                        </div>
+                        
+                        <button class="btn download-btn" id="downloadBtn">Download Resized Image</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div class="ad-container">
+        <!-- AdSense Ad Unit -->
+        <ins class="adsbygoogle"
+             style="display:block"
+             data-ad-client="ca-pub-YOUR_ADSENSE_ID"
+             data-ad-slot="YOUR_AD_SLOT"
+             data-ad-format="auto"
+             data-full-width-responsive="true"></ins>
+        <script>
+             (adsbygoogle = window.adsbygoogle || []).push({});
+        </script>
+    </div>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <h2>ToolsHub</h2>
+                    <p>Free online tools for everyone</p>
+                </div>
+                <div class="footer-links">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="../index.html">Home</a></li>
+                        <li><a href="../image-tools.html">Image Tools</a></li>
+                        <li><a href="../pdf-tools.html">PDF Tools</a></li>
+                        <li><a href="../about.html">About</a></li>
+                        <li><a href="../privacy.html">Privacy Policy</a></li>
+                        <li><a href="../terms.html">Terms of Service</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="copyright">
+                <p>&copy; 2025 ToolsHub. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../js/script.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Elements
+            const dropArea = document.getElementById('dropArea');
+            const fileInput = document.getElementById('fileInput');
+            const browseBtn = document.getElementById('browseBtn');
+            const resizeBtn = document.getElementById('resizeBtn');
+            const progressContainer = document.querySelector('.progress-container');
+            const progressBar = document.getElementById('progressBar');
+            const resultContainer = document.getElementById('resultContainer');
+            const originalImage = document.getElementById('originalImage');
+            const resizedImage = document.getElementById('resizedImage');
+            const originalSize = document.getElementById('originalSize');
+            const resizedSize = document.getElementById('resizedSize');
+            const downloadBtn = document.getElementById('downloadBtn');
+            
+            // Size inputs
+            const originalWidthInput = document.getElementById('originalWidth');
+            const originalHeightInput = document.getElementById('originalHeight');
+            const newWidthInput = document.getElementById('newWidth');
+            const newHeightInput = document.getElementById('newHeight');
+            
+            // Checkboxes
+            const preserveAspectRatio = document.getElementById('preserveAspectRatio');
+            const applySmoothing = document.getElementById('applySmoothing');
+            
+            // File selection
+            let selectedFile = null;
+            let aspectRatio = 1;
+            
+            browseBtn.addEventListener('click', function() {
+                fileInput.click();
+            });
+            
+            fileInput.addEventListener('change', handleFileSelect);
+            
+            // Drag and drop
+            dropArea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                dropArea.classList.add('drag-over');
+            });
+            
+            dropArea.addEventListener('dragleave', function() {
+                dropArea.classList.remove('drag-over');
+            });
+            
+            dropArea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                dropArea.classList.remove('drag-over');
+                
+                if (e.dataTransfer.files.length) {
+                    fileInput.files = e.dataTransfer.files;
+                    handleFileSelect(e);
+                }
+            });
+            
+            function handleFileSelect(e) {
+                const files = e.target.files || e.dataTransfer.files;
+                
+                if (files.length === 0) return;
+                
+                const file = files[0];
+                
+                if (!file.type.match('image.*')) {
+                    showError('Please select an image file (JPEG, PNG, WebP, etc.)');
+                    return;
+                }
+                
+                selectedFile = file;
+                resizeBtn.disabled = false;
+                
+                // Show original image
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    originalImage.src = e.target.result;
+                    originalSize.textContent = 'Size: ' + formatFileSize(file.size);
+                    
+                    // Get original dimensions
+                    const img = new Image();
+                    img.onload = function() {
+                        originalWidthInput.value = img.width;
+                        originalHeightInput.value = img.height;
+                        
+                        // Initialize new dimensions
+                        newWidthInput.value = img.width;
+                        newHeightInput.value = img.height;
+                        
+                        // Calculate aspect ratio
+                        aspectRatio = img.width / img.height;
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+                
+                // Update UI
+                dropArea.querySelector('h3').textContent = file.name;
+                dropArea.querySelector('p').textContent = 'Size: ' + formatFileSize(file.size);
+            }
+            
+            // Maintain aspect ratio when changing width or height
+            newWidthInput.addEventListener('input', function() {
+                if (preserveAspectRatio.checked && this.value) {
+                    newHeightInput.value = Math.round(this.value / aspectRatio);
+                }
+            });
+            
+            newHeightInput.addEventListener('input', function() {
+                if (preserveAspectRatio.checked && this.value) {
+                    newWidthInput.value = Math.round(this.value * aspectRatio);
+                }
+            });
+            
+            // Resizing
+            resizeBtn.addEventListener('click', async function() {
+                if (!selectedFile) return;
+                
+                const newWidth = parseInt(newWidthInput.value);
+                const newHeight = parseInt(newHeightInput.value);
+                
+                if (!newWidth || !newHeight) {
+                    showError('Please enter valid dimensions for width and height.');
+                    return;
+                }
+                
+                // Show progress
+                progressContainer.style.display = 'block';
+                resultContainer.classList.remove('active');
+                
+                try {
+                    // Simulate progress
+                    let progress = 0;
+                    const progressInterval = setInterval(() => {
+                        progress += 10;
+                        progressBar.style.width = Math.min(progress, 95) + '%';
+                        if (progress >= 95) clearInterval(progressInterval);
+                    }, 100);
+                    
+                    // Resize image
+                    const resizedBlob = await resizeImage(selectedFile, newWidth, newHeight);
+                    
+                    // Complete progress
+                    clearInterval(progressInterval);
+                    progressBar.style.width = '100%';
+                    
+                    // Display results
+                    resizedImage.src = URL.createObjectURL(resizedBlob);
+                    resizedSize.textContent = 'Size: ' + formatFileSize(resizedBlob.size);
+                    
+                    // Show results
+                    setTimeout(() => {
+                        progressContainer.style.display = 'none';
+                        resultContainer.classList.add('active');
+                    }, 500);
+                    
+                    // Set up download button
+                    downloadBtn.onclick = function() {
+                        const extension = selectedFile.type.split('/')[1];
+                        const filename = selectedFile.name.split('.')[0] + '-resized.' + extension;
+                        downloadFile(resizedBlob, filename);
+                    };
+                } catch (error) {
+                    console.error('Resizing error:', error);
+                    showError('Error resizing image. Please try again.');
+                    progressContainer.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

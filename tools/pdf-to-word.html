@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF to Word - ToolsHub</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/docx/7.8.2/docx.js"></script>
+    <style>
+        .converter-container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        .upload-area {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .upload-area:hover {
+            border-color: #007bff;
+            background: #f8f9fa;
+        }
+
+        .upload-area i {
+            font-size: 3rem;
+            color: #007bff;
+            margin-bottom: 1rem;
+        }
+
+        .preview-container {
+            display: none;
+            margin: 2rem 0;
+        }
+
+        .preview-content {
+            background: #f8f9fa;
+            padding: 2rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .preview-page {
+            background: white;
+            padding: 2rem;
+            margin-bottom: 1rem;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .page-number {
+            color: #6c757d;
+            text-align: center;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .conversion-options {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .option-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .option-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .option-group h3 {
+            margin-bottom: 1rem;
+            color: #333;
+            font-size: 1.1rem;
+        }
+
+        .checkbox-group {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: white;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            width: 100%;
+            font-size: 1.1rem;
+        }
+
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+
+        .loading {
+            display: none;
+            margin: 1rem 0;
+            text-align: center;
+        }
+
+        .progress-container {
+            margin-top: 1rem;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: #f0f0f0;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+
+        .progress {
+            width: 0%;
+            height: 100%;
+            background: #007bff;
+            transition: width 0.3s ease;
+        }
+
+        .status-text {
+            margin-top: 0.5rem;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: #e9ecef;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+        }
+
+        .file-info i {
+            font-size: 2rem;
+            color: #007bff;
+        }
+
+        .file-details {
+            flex-grow: 1;
+        }
+
+        .file-name {
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+        }
+
+        .file-size {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        .quality-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .quality-option {
+            padding: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .quality-option:hover {
+            border-color: #007bff;
+            background: #f8f9fa;
+        }
+
+        .quality-option.selected {
+            border-color: #007bff;
+            background: #e7f5ff;
+        }
+
+        .quality-option h4 {
+            margin: 0 0 0.5rem 0;
+            color: #333;
+        }
+
+        .quality-option p {
+            margin: 0;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="logo">
+                <a href="../index.html">ToolsHub</a>
+            </div>
+            <ul class="nav-links">
+                <li><a href="../index.html">Home</a></li>
+                <li><a href="../image-tools.html">Image Tools</a></li>
+                <li><a href="../pdf-tools.html">PDF Tools</a></li>
+                <li><a href="../about.html">About</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class="page-header">
+            <div class="container">
+                <h1>PDF to Word Converter</h1>
+                <p>Convert PDF documents to editable Word format</p>
+            </div>
+        </section>
+
+        <div class="converter-container">
+            <div class="upload-area" id="dropZone">
+                <i class="fas fa-file-pdf"></i>
+                <h3>Drop your PDF here or click to upload</h3>
+                <p>Maximum file size: 100MB</p>
+                <input type="file" id="fileInput" accept=".pdf" style="display: none">
+            </div>
+
+            <div class="preview-container" id="previewContainer">
+                <div class="file-info" id="fileInfo">
+                    <i class="fas fa-file-pdf"></i>
+                    <div class="file-details">
+                        <div class="file-name" id="fileName">document.pdf</div>
+                        <div class="file-size" id="fileSize">0 MB</div>
+                    </div>
+                </div>
+
+                <div class="conversion-options">
+                    <div class="option-group">
+                        <h3>Conversion Quality</h3>
+                        <div class="quality-options">
+                            <div class="quality-option selected" data-quality="high">
+                                <h4>High Quality</h4>
+                                <p>Best formatting accuracy, larger file size</p>
+                            </div>
+                            <div class="quality-option" data-quality="balanced">
+                                <h4>Balanced</h4>
+                                <p>Good quality with optimized file size</p>
+                            </div>
+                            <div class="quality-option" data-quality="fast">
+                                <h4>Fast Conversion</h4>
+                                <p>Quick conversion, basic formatting</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="option-group">
+                        <h3>Conversion Options</h3>
+                        <div class="checkbox-group">
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="maintainLayout" checked>
+                                Maintain Layout
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="extractImages" checked>
+                                Extract Images
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="preserveLinks" checked>
+                                Preserve Links
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="detectTables" checked>
+                                Detect Tables
+                            </label>
+                        </div>
+                    </div>
+
+                    <button class="btn-primary" id="convertButton">
+                        <i class="fas fa-sync-alt"></i> Convert to Word
+                    </button>
+                </div>
+
+                <div class="loading" id="loading">
+                    <div class="progress-container">
+                        <div class="progress-bar">
+                            <div class="progress" id="progress"></div>
+                        </div>
+                        <div class="status-text" id="statusText">Converting PDF to Word...</div>
+                    </div>
+                </div>
+
+                <div class="preview-content" id="previewContent">
+                    <!-- Preview pages will be added here -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <h2>ToolsHub</h2>
+                    <p>Free online tools for everyone</p>
+                </div>
+            </div>
+            <div class="copyright">
+                <p>&copy; 2025 ToolsHub. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const dropZone = document.getElementById('dropZone');
+            const fileInput = document.getElementById('fileInput');
+            const loading = document.getElementById('loading');
+            const progress = document.getElementById('progress');
+            const statusText = document.getElementById('statusText');
+            const previewContainer = document.getElementById('previewContainer');
+            const previewContent = document.getElementById('previewContent');
+            const fileName = document.getElementById('fileName');
+            const fileSize = document.getElementById('fileSize');
+            const convertButton = document.getElementById('convertButton');
+            const qualityOptions = document.querySelectorAll('.quality-option');
+
+            let pdf = null;
+            let selectedQuality = 'high';
+
+            // Initialize PDF.js
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js';
+
+            // Handle drag and drop
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.style.borderColor = '#007bff';
+            });
+
+            dropZone.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                dropZone.style.borderColor = '#ccc';
+            });
+
+            dropZone.addEventListener('drop', async (e) => {
+                e.preventDefault();
+                dropZone.style.borderColor = '#ccc';
+                const file = e.dataTransfer.files[0];
+                if (file && file.type === 'application/pdf') {
+                    handlePdfFile(file);
+                }
+            });
+
+            dropZone.addEventListener('click', () => {
+                fileInput.click();
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    handlePdfFile(file);
+                }
+            });
+
+            qualityOptions.forEach(option => {
+                option.addEventListener('click', () => {
+                    qualityOptions.forEach(opt => opt.classList.remove('selected'));
+                    option.classList.add('selected');
+                    selectedQuality = option.dataset.quality;
+                });
+            });
+
+            async function handlePdfFile(file) {
+                try {
+                    loading.style.display = 'block';
+                    progress.style.width = '30%';
+                    statusText.textContent = 'Loading PDF...';
+                    previewContent.innerHTML = '';
+
+                    fileName.textContent = file.name;
+                    fileSize.textContent = formatFileSize(file.size);
+
+                    const arrayBuffer = await file.arrayBuffer();
+                    pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
+                    
+                    previewContainer.style.display = 'block';
+                    dropZone.style.display = 'none';
+                    
+                    // Generate preview for first few pages
+                    const pagesToPreview = Math.min(pdf.numPages, 3);
+                    for (let i = 1; i <= pagesToPreview; i++) {
+                        progress.style.width = `${(i / pagesToPreview * 60) + 30}%`;
+                        await addPagePreview(i);
+                    }
+                    
+                    if (pdf.numPages > pagesToPreview) {
+                        const morePages = document.createElement('div');
+                        morePages.className = 'page-number';
+                        morePages.textContent = `+ ${pdf.numPages - pagesToPreview} more pages`;
+                        previewContent.appendChild(morePages);
+                    }
+                    
+                    progress.style.width = '100%';
+                } catch (error) {
+                    console.error('Error loading PDF:', error);
+                    alert('Error loading PDF file. Please try again.');
+                } finally {
+                    loading.style.display = 'none';
+                    progress.style.width = '0%';
+                }
+            }
+
+            async function addPagePreview(pageNumber) {
+                const page = await pdf.getPage(pageNumber);
+                const textContent = await page.getTextContent();
+                
+                const pageDiv = document.createElement('div');
+                pageDiv.className = 'preview-page';
+                
+                const pageNum = document.createElement('div');
+                pageNum.className = 'page-number';
+                pageNum.textContent = `Page ${pageNumber}`;
+                pageDiv.appendChild(pageNum);
+                
+                const textDiv = document.createElement('div');
+                textDiv.style.whiteSpace = 'pre-wrap';
+                textDiv.textContent = textContent.items
+                    .map(item => item.str)
+                    .join(' ')
+                    .substring(0, 500) + '...';
+                pageDiv.appendChild(textDiv);
+                
+                previewContent.appendChild(pageDiv);
+            }
+
+            function formatFileSize(bytes) {
+                const units = ['B', 'KB', 'MB', 'GB'];
+                let size = bytes;
+                let unitIndex = 0;
+                
+                while (size >= 1024 && unitIndex < units.length - 1) {
+                    size /= 1024;
+                    unitIndex++;
+                }
+                
+                return `${size.toFixed(1)} ${units[unitIndex]}`;
+            }
+
+            convertButton.addEventListener('click', async () => {
+                if (!pdf) {
+                    alert('Please upload a PDF first');
+                    return;
+                }
+
+                try {
+                    loading.style.display = 'block';
+                    progress.style.width = '0%';
+                    statusText.textContent = 'Extracting text...';
+
+                    const doc = new docx.Document({
+                        sections: [{
+                            properties: {},
+                            children: []
+                        }]
+                    });
+
+                    for (let i = 1; i <= pdf.numPages; i++) {
+                        progress.style.width = `${(i / pdf.numPages * 80)}%`;
+                        statusText.textContent = `Converting page ${i} of ${pdf.numPages}...`;
+
+                        const page = await pdf.getPage(i);
+                        const textContent = await page.getTextContent();
+                        
+                        const text = textContent.items
+                            .map(item => item.str)
+                            .join(' ');
+
+                        doc.addSection({
+                            children: [
+                                new docx.Paragraph({
+                                    children: [
+                                        new docx.TextRun(text)
+                                    ]
+                                })
+                            ]
+                        });
+                    }
+
+                    progress.style.width = '90%';
+                    statusText.textContent = 'Generating Word document...';
+
+                    const buffer = await docx.Packer.toBlob(doc);
+                    const url = URL.createObjectURL(buffer);
+                    
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = fileName.textContent.replace('.pdf', '.docx');
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+
+                    progress.style.width = '100%';
+                    statusText.textContent = 'Conversion complete!';
+                } catch (error) {
+                    console.error('Error converting PDF:', error);
+                    alert('Error converting PDF. Please try again.');
+                } finally {
+                    setTimeout(() => {
+                        loading.style.display = 'none';
+                        progress.style.width = '0%';
+                    }, 1000);
+                }
+            });
+        });
+    </script>
+</body>
+</html> 

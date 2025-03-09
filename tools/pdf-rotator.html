@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Page Rotator - ToolsHub</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <style>
+        .rotator-container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        .upload-area {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .upload-area:hover {
+            border-color: #007bff;
+            background: #f8f9fa;
+        }
+
+        .upload-area i {
+            font-size: 3rem;
+            color: #007bff;
+            margin-bottom: 1rem;
+        }
+
+        .preview-container {
+            display: none;
+            margin: 2rem 0;
+        }
+
+        .page-preview {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 2rem 0;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .preview-canvas {
+            max-width: 100%;
+            height: auto;
+            margin: 1rem 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+        }
+
+        .rotation-controls {
+            display: flex;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .btn-rotate {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 5px;
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .btn-rotate:hover {
+            background: #0056b3;
+        }
+
+        .page-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            margin: 1rem 0;
+            padding: 1rem;
+            background: white;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .page-controls button {
+            padding: 0.5rem 1rem;
+            border: none;
+            background: #007bff;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .page-controls button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .page-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 1rem 0;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        .page-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #6c757d;
+        }
+
+        .rotation-badge {
+            padding: 0.25rem 0.5rem;
+            background: #e9ecef;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .loading {
+            display: none;
+            margin: 1rem 0;
+            text-align: center;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: #f0f0f0;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+
+        .progress {
+            width: 0%;
+            height: 100%;
+            background: #007bff;
+            transition: width 0.3s ease;
+        }
+
+        .save-controls {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+
+        .btn-outline {
+            background: white;
+            color: #007bff;
+            padding: 0.8rem 1.5rem;
+            border: 1px solid #007bff;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline:hover {
+            background: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="logo">
+                <a href="../index.html">ToolsHub</a>
+            </div>
+            <ul class="nav-links">
+                <li><a href="../index.html">Home</a></li>
+                <li><a href="../image-tools.html">Image Tools</a></li>
+                <li><a href="../pdf-tools.html">PDF Tools</a></li>
+                <li><a href="../about.html">About</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class="page-header">
+            <div class="container">
+                <h1>PDF Page Rotator</h1>
+                <p>Rotate pages in your PDF documents with ease</p>
+            </div>
+        </section>
+
+        <div class="rotator-container">
+            <div class="upload-area" id="dropZone">
+                <i class="fas fa-file-pdf"></i>
+                <h3>Drop your PDF here or click to upload</h3>
+                <p>Maximum file size: 100MB</p>
+                <input type="file" id="fileInput" accept=".pdf" style="display: none">
+            </div>
+
+            <div class="loading" id="loading">
+                <p>Processing PDF...</p>
+                <div class="progress-bar">
+                    <div class="progress" id="progress"></div>
+                </div>
+            </div>
+
+            <div class="preview-container" id="previewContainer">
+                <div class="page-controls">
+                    <button id="prevPage" disabled>
+                        <i class="fas fa-chevron-left"></i> Previous
+                    </button>
+                    <span>Page <span id="currentPage">1</span> of <span id="totalPages">1</span></span>
+                    <button id="nextPage" disabled>
+                        Next <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+
+                <div class="page-info">
+                    <div class="page-status">
+                        Current Rotation: <span id="rotationBadge" class="rotation-badge">0°</span>
+                    </div>
+                    <div class="rotation-controls">
+                        <button class="btn-rotate" id="rotateLeft">
+                            <i class="fas fa-undo"></i> Rotate Left
+                        </button>
+                        <button class="btn-rotate" id="rotateRight">
+                            <i class="fas fa-redo"></i> Rotate Right
+                        </button>
+                    </div>
+                </div>
+
+                <div class="page-preview">
+                    <canvas id="previewCanvas" class="preview-canvas"></canvas>
+                </div>
+
+                <div class="save-controls">
+                    <button class="btn-primary" id="saveButton">
+                        <i class="fas fa-save"></i> Save Changes
+                    </button>
+                    <button class="btn-outline" id="resetButton">
+                        <i class="fas fa-undo"></i> Reset All Rotations
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <h2>ToolsHub</h2>
+                    <p>Free online tools for everyone</p>
+                </div>
+            </div>
+            <div class="copyright">
+                <p>&copy; 2025 ToolsHub. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const dropZone = document.getElementById('dropZone');
+            const fileInput = document.getElementById('fileInput');
+            const loading = document.getElementById('loading');
+            const progress = document.getElementById('progress');
+            const previewContainer = document.getElementById('previewContainer');
+            const canvas = document.getElementById('previewCanvas');
+            const prevPageBtn = document.getElementById('prevPage');
+            const nextPageBtn = document.getElementById('nextPage');
+            const currentPageSpan = document.getElementById('currentPage');
+            const totalPagesSpan = document.getElementById('totalPages');
+            const rotationBadge = document.getElementById('rotationBadge');
+            const rotateLeftBtn = document.getElementById('rotateLeft');
+            const rotateRightBtn = document.getElementById('rotateRight');
+            const saveButton = document.getElementById('saveButton');
+            const resetButton = document.getElementById('resetButton');
+
+            let pdf = null;
+            let currentPage = 1;
+            let pageRotations = {};
+            
+            // Initialize PDF.js
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js';
+
+            // Handle drag and drop
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.style.borderColor = '#007bff';
+            });
+
+            dropZone.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                dropZone.style.borderColor = '#ccc';
+            });
+
+            dropZone.addEventListener('drop', async (e) => {
+                e.preventDefault();
+                dropZone.style.borderColor = '#ccc';
+                const file = e.dataTransfer.files[0];
+                if (file && file.type === 'application/pdf') {
+                    handlePdfFile(file);
+                }
+            });
+
+            dropZone.addEventListener('click', () => {
+                fileInput.click();
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    handlePdfFile(file);
+                }
+            });
+
+            async function handlePdfFile(file) {
+                try {
+                    loading.style.display = 'block';
+                    progress.style.width = '30%';
+
+                    const arrayBuffer = await file.arrayBuffer();
+                    pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
+                    
+                    totalPagesSpan.textContent = pdf.numPages;
+                    previewContainer.style.display = 'block';
+                    dropZone.style.display = 'none';
+                    
+                    // Initialize rotations
+                    for (let i = 1; i <= pdf.numPages; i++) {
+                        pageRotations[i] = 0;
+                    }
+                    
+                    await renderPage(1);
+                    
+                    prevPageBtn.disabled = currentPage === 1;
+                    nextPageBtn.disabled = currentPage === pdf.numPages;
+                    
+                    progress.style.width = '100%';
+                } catch (error) {
+                    console.error('Error loading PDF:', error);
+                    alert('Error loading PDF file. Please try again.');
+                } finally {
+                    loading.style.display = 'none';
+                    progress.style.width = '0%';
+                }
+            }
+
+            async function renderPage(pageNumber) {
+                const page = await pdf.getPage(pageNumber);
+                const rotation = pageRotations[pageNumber] || 0;
+                const viewport = page.getViewport({ scale: 1.5, rotation });
+                
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+                
+                const renderContext = {
+                    canvasContext: canvas.getContext('2d'),
+                    viewport: viewport
+                };
+                
+                await page.render(renderContext).promise;
+                currentPage = pageNumber;
+                currentPageSpan.textContent = pageNumber;
+                rotationBadge.textContent = `${rotation}°`;
+            }
+
+            // Navigation
+            prevPageBtn.addEventListener('click', async () => {
+                if (currentPage > 1) {
+                    await renderPage(currentPage - 1);
+                    prevPageBtn.disabled = currentPage === 1;
+                    nextPageBtn.disabled = false;
+                }
+            });
+
+            nextPageBtn.addEventListener('click', async () => {
+                if (currentPage < pdf.numPages) {
+                    await renderPage(currentPage + 1);
+                    nextPageBtn.disabled = currentPage === pdf.numPages;
+                    prevPageBtn.disabled = false;
+                }
+            });
+
+            // Rotation controls
+            rotateLeftBtn.addEventListener('click', async () => {
+                pageRotations[currentPage] = ((pageRotations[currentPage] || 0) - 90) % 360;
+                if (pageRotations[currentPage] < 0) pageRotations[currentPage] += 360;
+                await renderPage(currentPage);
+            });
+
+            rotateRightBtn.addEventListener('click', async () => {
+                pageRotations[currentPage] = ((pageRotations[currentPage] || 0) + 90) % 360;
+                await renderPage(currentPage);
+            });
+
+            // Reset rotations
+            resetButton.addEventListener('click', async () => {
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    pageRotations[i] = 0;
+                }
+                await renderPage(currentPage);
+            });
+
+            // Save PDF with rotations
+            saveButton.addEventListener('click', async () => {
+                try {
+                    loading.style.display = 'block';
+                    progress.style.width = '30%';
+
+                    const pdfDoc = await PDFLib.PDFDocument.load(await pdf.getData());
+                    const pages = pdfDoc.getPages();
+
+                    progress.style.width = '60%';
+
+                    // Apply rotations
+                    for (let i = 0; i < pages.length; i++) {
+                        const rotation = pageRotations[i + 1] || 0;
+                        if (rotation !== 0) {
+                            pages[i].setRotation(PDFLib.degrees(rotation));
+                        }
+                    }
+
+                    progress.style.width = '80%';
+
+                    const pdfBytes = await pdfDoc.save();
+                    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+                    const url = URL.createObjectURL(blob);
+                    
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'rotated_document.pdf';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+
+                    progress.style.width = '100%';
+                } catch (error) {
+                    console.error('Error saving PDF:', error);
+                    alert('Error saving PDF. Please try again.');
+                } finally {
+                    loading.style.display = 'none';
+                    progress.style.width = '0%';
+                }
+            });
+        });
+    </script>
+</body>
+</html> 

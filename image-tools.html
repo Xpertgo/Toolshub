@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Tools - ToolsHub</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-YOUR_ADSENSE_ID" crossorigin="anonymous"></script>
+    <style>
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        
+        .tool-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: var(--card-shadow);
+            padding: 1.5rem;
+            transition: var(--transition);
+            position: relative;
+        }
+        
+        .tool-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .tool-icon {
+            font-size: 2rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+        
+        .tool-card h3 {
+            margin-bottom: 0.5rem;
+            font-size: 1.2rem;
+        }
+        
+        .tool-card p {
+            color: var(--light-text);
+            margin-bottom: 1rem;
+            min-height: 3rem;
+        }
+        
+        .tool-card.unavailable {
+            opacity: 0.7;
+            background-color: #f9f9f9;
+        }
+        
+        .tool-card.unavailable .tool-icon {
+            color: var(--light-text);
+        }
+        
+        .tool-card.unavailable .btn {
+            background-color: #aaa;
+            cursor: not-allowed;
+        }
+        
+        .tool-card.unavailable .btn:hover {
+            background-color: #aaa;
+            transform: none;
+        }
+        
+        .coming-soon {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: var(--accent-color);
+            color: white;
+            font-size: 0.7rem;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+        
+        .section-info {
+            text-align: center;
+            max-width: 800px;
+            margin: 0 auto 3rem;
+            padding: 1.5rem;
+            background-color: rgba(66, 133, 244, 0.05);
+            border: 1px solid rgba(66, 133, 244, 0.1);
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="logo">
+                <a href="index.html">ToolsHub</a>
+            </div>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="image-tools.html" class="active">Image Tools</a></li>
+                <li><a href="pdf-tools.html">PDF Tools</a></li>
+                <li><a href="about.html">About</a></li>
+            </ul>
+            <div class="hamburger">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section class="page-header">
+            <div class="container">
+                <h1>Image Tools</h1>
+                <p>Free online tools to edit, convert, and enhance your images</p>
+            </div>
+        </section>
+
+        <section class="tools-section">
+            <div class="container">
+                <div class="section-info">
+                    <h2>Our Growing Collection of Image Tools</h2>
+                    <p>We're constantly adding new tools to help you with all your image editing needs. Currently available tools are ready to use, while the tools marked "Coming Soon" will be available in future updates.</p>
+                </div>
+                
+                <div class="search-container">
+                    <input type="text" id="toolSearch" placeholder="Search for image tools...">
+                    <button type="submit"><i class="fas fa-search"></i></button>
+                </div>
+                
+                <div class="tools-grid">
+                    <!-- Image Compressor -->
+                    <div class="tool-card" id="compress">
+                        <div class="tool-icon"><i class="fas fa-compress"></i></div>
+                        <h3>Image Compressor</h3>
+                        <p>Reduce image file size while maintaining quality</p>
+                        <a href="tools/image-compressor.html" class="btn">Use Tool</a>
+                    </div>
+                    
+                    <!-- Image Cropper -->
+                    <div class="tool-card" id="crop">
+                        <div class="tool-icon"><i class="fas fa-crop"></i></div>
+                        <h3>Image Cropper</h3>
+                        <p>Crop and adjust your image dimensions easily</p>
+                        <a href="tools/image-cropper.html" class="btn">Use Tool</a>
+                    </div>
+                    
+                    <!-- Image Converter -->
+                    <div class="tool-card" id="convert">
+                        <div class="tool-icon"><i class="fas fa-exchange-alt"></i></div>
+                        <h3>Image Converter</h3>
+                        <p>Convert images between different formats</p>
+                        <a href="tools/image-converter.html" class="btn">Use Tool</a>
+                    </div>
+                    
+                    <!-- Image Resizer -->
+                    <div class="tool-card" id="resize">
+                        <div class="tool-icon"><i class="fas fa-expand"></i></div>
+                        <h3>Image Resizer</h3>
+                        <p>Resize your images to specific dimensions</p>
+                        <a href="tools/image-resizer.html" class="btn">Use Tool</a>
+                    </div>
+                    
+                    <!-- Image Color Picker -->
+                    <div class="tool-card" id="colorpicker">
+                        <div class="tool-icon"><i class="fas fa-eye-dropper"></i></div>
+                        <h3>Color Picker</h3>
+                        <p>Extract colors and find dominant palettes from images</p>
+                        <a href="tools/color-picker.html" class="btn">Use Tool</a>
+                    </div>
+                    
+                    <!-- Image Background Remover -->
+                    <div class="tool-card" id="bgremove">
+                        <div class="tool-icon"><i class="fas fa-cut"></i></div>
+                        <h3>Background Remover</h3>
+                        <p>Remove background from images automatically</p>
+                        <a href="tools/background-remover.html" class="btn">Use Tool</a>
+                    </div>
+                    
+                    <!-- Image Editor -->
+                    <div class="tool-card" id="image-editor">
+                        <!-- <span class="coming-soon">Coming Soon</span> -->
+                        <div class="tool-icon"><i class="fas fa-edit"></i></div>
+                        <h3>Image Editor</h3>
+                        <p>Apply filters, add text, and make adjustments to your images</p>
+                        <a href="tools/image-editor.html" class="btn">Use Tool</a>
+                    </div>
+                    
+                    
+                    <!-- Image Watermark -->
+                    <div class="tool-card" id="watermark">
+                        <!-- <span class="coming-soon">Coming Soon</span> -->
+                        <div class="tool-icon"><i class="fas fa-copyright"></i></div>
+                        <h3>Watermark Maker</h3>
+                        <p>Add text or image watermarks to your images</p>
+                        <a href="tools/watermark-maker.html" class="btn">Use Tool</a>
+                    </div>
+                    
+                    <!-- Image to PDF -->
+                    <div class="tool-card" id="img2pdf">
+                        <div class="tool-icon"><i class="fas fa-file-pdf"></i></div>
+                        <h3>Image to PDF</h3>
+                        <p>Convert images to PDF documents easily</p>
+                        <a href="tools/image-to-pdf.html" class="btn">Use Tool</a>
+                    </div>
+                    
+                    <!-- Image Text Extractor (OCR) -->
+                    <div class="tool-card" id="text-extractor">
+                        <div class="tool-icon"><i class="fas fa-font"></i></div>
+                        <h3>Text Extractor (OCR)</h3>
+                        <p>Extract text from images using OCR</p>
+                        <a href="tools/text-extractor.html" class="btn">Use Tool</a>
+                    </div>
+                    
+                    <!-- Image Filters -->
+                    <div class="tool-card unavailable">
+                        <span class="coming-soon">Coming Soon</span>
+                        <div class="tool-icon"><i class="fas fa-magic"></i></div>
+                        <h3>Image Filters</h3>
+                        <p>Apply filters and effects to your images</p>
+                        <a href="#" class="btn">Coming Soon</a>
+                    </div>
+                    
+                    <!-- Image Metadata Viewer -->
+                    <div class="tool-card unavailable">
+                        <span class="coming-soon">Coming Soon</span>
+                        <div class="tool-icon"><i class="fas fa-info-circle"></i></div>
+                        <h3>Metadata Viewer</h3>
+                        <p>View and edit image metadata (EXIF, IPTC)</p>
+                        <a href="#" class="btn">Coming Soon</a>
+                    </div>
+                    
+                    
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div class="ad-container">
+        <!-- AdSense Ad Unit -->
+        <ins class="adsbygoogle"
+             style="display:block"
+             data-ad-client="ca-pub-YOUR_ADSENSE_ID"
+             data-ad-slot="YOUR_AD_SLOT"
+             data-ad-format="auto"
+             data-full-width-responsive="true"></ins>
+        <script>
+             (adsbygoogle = window.adsbygoogle || []).push({});
+        </script>
+    </div>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <h2>ToolsHub</h2>
+                    <p>Free online tools for everyone</p>
+                </div>
+                <div class="footer-links">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="image-tools.html">Image Tools</a></li>
+                        <li><a href="pdf-tools.html">PDF Tools</a></li>
+                        <li><a href="about.html">About</a></li>
+                        <li><a href="privacy.html">Privacy Policy</a></li>
+                        <li><a href="terms.html">Terms of Service</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="copyright">
+                <p>&copy; 2025 ToolsHub. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/script.js"></script>
+</body>
+</html>

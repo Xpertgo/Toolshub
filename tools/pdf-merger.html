@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Merger - ToolsHub</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-YOUR_ADSENSE_ID" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js"></script>
+    <style>
+        .tool-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: var(--card-shadow);
+        }
+        
+        .tool-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .tool-header h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+        
+        .tool-description {
+            color: var(--light-text);
+            margin-bottom: 2rem;
+        }
+        
+        .drop-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 3rem;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-bottom: 2rem;
+        }
+        
+        .drop-area:hover, .drop-area.drag-over {
+            border-color: var(--primary-color);
+            background-color: rgba(66, 133, 244, 0.05);
+        }
+        
+        .drop-area i {
+            font-size: 3rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .file-list {
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .file-list-empty {
+            padding: 2rem;
+            text-align: center;
+            color: var(--light-text);
+        }
+        
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            background-color: white;
+            transition: var(--transition);
+        }
+        
+        .file-item:last-child {
+            border-bottom: none;
+        }
+        
+        .file-item.sortable-ghost {
+            opacity: 0.5;
+        }
+        
+        .file-handle {
+            margin-right: 1rem;
+            cursor: grab;
+            color: var(--light-text);
+        }
+        
+        .file-info {
+            flex: 1;
+        }
+        
+        .file-name {
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+        
+        .file-size {
+            font-size: 0.8rem;
+            color: var(--light-text);
+        }
+        
+        .file-preview {
+            width: 50px;
+            height: 50px;
+            background-color: #f0f0f0;
+            border-radius: 4px;
+            margin-right: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        
+        .file-preview i {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+        }
+        
+        .file-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .file-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .file-action-btn {
+            background: none;
+            border: none;
+            font-size: 1rem;
+            color: var(--light-text);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .file-action-btn:hover {
+            color: var(--text-color);
+        }
+        
+        .file-action-btn.delete:hover {
+            color: var(--accent-color);
+        }
+        
+        .progress-container {
+            display: none;
+            margin-bottom: 2rem;
+        }
+        
+        .progress-bar {
+            height: 6px;
+            background-color: #f0f0f0;
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+        
+        .progress {
+            height: 100%;
+            background-color: var(--primary-color);
+            width: 0;
+            transition: width 0.3s ease;
+        }
+        
+        .result-container {
+            display: none;
+            margin-top: 2rem;
+            text-align: center;
+        }
+        
+        .result-container.active {
+            display: block;
+        }
+        
+        .result-icon {
+            font-size: 4rem;
+            color: var(--secondary-color);
+            margin-bottom: 1rem;
+        }
+        
+        .download-btn {
+            margin-top: 1rem;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+        
+        .secondary-btn {
+            background-color: white;
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+        }
+        
+        .secondary-btn:hover {
+            background-color: rgba(66, 133, 244, 0.05);
+            color: var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="logo">
+                <a href="../index.html">ToolsHub</a>
+            </div>
+            <ul class="nav-links">
+                <li><a href="../index.html">Home</a></li>
+                <li><a href="../image-tools.html">Image Tools</a></li>
+                <li><a href="../pdf-tools.html" class="active">PDF Tools</a></li>
+                <li><a href="../about.html">About</a></li>
+            </ul>
+            <div class="hamburger">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section class="page-header">
+            <div class="container">
+                <h1>PDF Merger</h1>
+                <p>Combine multiple PDF files into one document</p>
+            </div>
+        </section>
+
+        <section class="tool-section">
+            <div class="container">
+                <div class="tool-container">
+                    <div class="tool-header">
+                        <h2>Merge PDF Files</h2>
+                        <p class="tool-description">Combine multiple PDF documents into a single file. Drag to reorder files and customize your merged PDF.</p>
+                    </div>
+                    
+                    <div class="drop-area" id="dropArea">
+                        <i class="fas fa-file-pdf"></i>
+                        <h3>Drag & Drop PDF files here</h3>
+                        <p>or</p>
+                        <button class="btn" id="browseBtn">Browse Files</button>
+                        <input type="file" id="fileInput" class="file-input" accept=".pdf" multiple>
+                    </div>
+                    
+                    <div class="file-list" id="fileList">
+                        <div class="file-list-empty" id="fileListEmpty">
+                            <p>No PDF files added yet</p>
+                        </div>
+                    </div>
+                    
+                    <div class="action-buttons">
+                        <button class="btn secondary-btn" id="clearBtn" disabled>Clear All</button>
+                        <button class="btn" id="mergeBtn" disabled>Merge PDFs</button>
+                    </div>
+                    
+                    <div class="progress-container" id="progressContainer">
+                        <p>Merging PDFs...</p>
+                        <div class="progress-bar">
+                            <div class="progress" id="progressBar"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="result-container" id="resultContainer">
+                        <div class="result-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <h3>PDFs Merged Successfully!</h3>
+                        <p>Your PDF files have been combined into a single document.</p>
+                        <button class="btn download-btn" id="downloadBtn">Download Merged PDF</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div class="ad-container">
+        <!-- AdSense Ad Unit -->
+        <ins class="adsbygoogle"
+             style="display:block"
+             data-ad-client="ca-pub-YOUR_ADSENSE_ID"
+             data-ad-slot="YOUR_AD_SLOT"
+             data-ad-format="auto"
+             data-full-width-responsive="true"></ins>
+        <script>
+             (adsbygoogle = window.adsbygoogle || []).push({});
+        </script>
+    </div>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <h2>ToolsHub</h2>
+                    <p>Free online tools for everyone</p>
+                </div>
+                <div class="footer-links">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="../index.html">Home</a></li>
+                        <li><a href="../image-tools.html">Image Tools</a></li>
+                        <li><a href="../pdf-tools.html">PDF Tools</a></li>
+                        <li><a href="../about.html">About</a></li>
+                        <li><a href="../privacy.html">Privacy Policy</a></li>
+                        <li><a href="../terms.html">Terms of Service</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="copyright">
+                <p>&copy; 2025 ToolsHub. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../js/script.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Elements
+            const dropArea = document.getElementById('dropArea');
+            const fileInput = document.getElementById('fileInput');
+            const browseBtn = document.getElementById('browseBtn');
+            const fileList = document.getElementById('fileList');
+            const fileListEmpty = document.getElementById('fileListEmpty');
+            const clearBtn = document.getElementById('clearBtn');
+            const mergeBtn = document.getElementById('mergeBtn');
+            const progressContainer = document.getElementById('progressContainer');
+            const progressBar = document.getElementById('progressBar');
+            const resultContainer = document.getElementById('resultContainer');
+            const downloadBtn = document.getElementById('downloadBtn');
+            
+            // File array to store all PDFs
+            let files = [];
+            let mergedPdf = null;
+            
+            // Initialize sortable file list
+            new Sortable(fileList, {
+                handle: '.file-handle',
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                onSort: function() {
+                    // Reorder files array based on sorted DOM elements
+                    const newOrder = [];
+                    const fileItems = fileList.querySelectorAll('.file-item');
+                    fileItems.forEach(item => {
+                        const index = parseInt(item.dataset.index);
+                        newOrder.push(files[index]);
+                    });
+                    files = newOrder;
+                    updateFileList();
+                }
+            });
+            
+            // File selection
+            browseBtn.addEventListener('click', function() {
+                fileInput.click();
+            });
+            
+            fileInput.addEventListener('change', handleFileSelect);
+            
+            // Drag and drop
+            dropArea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                dropArea.classList.add('drag-over');
+            });
+            
+            dropArea.addEventListener('dragleave', function() {
+                dropArea.classList.remove('drag-over');
+            });
+            
+            dropArea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                dropArea.classList.remove('drag-over');
+                
+                if (e.dataTransfer.files.length) {
+                    handleFiles(e.dataTransfer.files);
+                }
+            });
+            
+            // Clear button
+            clearBtn.addEventListener('click', function() {
+                files = [];
+                updateFileList();
+                updateButtons();
+            });
+            
+            // Merge button
+            mergeBtn.addEventListener('click', async function() {
+                if (files.length === 0) return;
+                
+                // Show progress
+                progressContainer.style.display = 'block';
+                resultContainer.classList.remove('active');
+                
+                try {
+                    // Simulate progress
+                    let progress = 0;
+                    const progressInterval = setInterval(() => {
+                        progress += 2;
+                        progressBar.style.width = Math.min(progress, 95) + '%';
+                        if (progress >= 95) clearInterval(progressInterval);
+                    }, 100);
+                    
+                    // Merge PDFs using PDF-lib
+                    mergedPdf = await mergePDFDocuments(files);
+                    
+                    // Complete progress
+                    clearInterval(progressInterval);
+                    progressBar.style.width = '100%';
+                    
+                    // Show results
+                    setTimeout(() => {
+                        progressContainer.style.display = 'none';
+                        resultContainer.classList.add('active');
+                    }, 500);
+                    
+                    // Set up download button
+                    downloadBtn.onclick = function() {
+                        if (mergedPdf) {
+                            const blob = new Blob([mergedPdf], { type: 'application/pdf' });
+                            downloadFile(blob, 'merged-document.pdf');
+                        }
+                    };
+                } catch (error) {
+                    console.error('Merging error:', error);
+                    showError('Error merging PDF files. Please try again.');
+                    progressContainer.style.display = 'none';
+                }
+            });
+            
+            // Handle file selection
+            function handleFileSelect(e) {
+                const selectedFiles = e.target.files;
+                if (selectedFiles.length === 0) return;
+                
+                handleFiles(selectedFiles);
+                
+                // Reset input to allow selecting the same files again
+                fileInput.value = '';
+            }
+            
+            function handleFiles(selectedFiles) {
+                // Filter only PDF files
+                const pdfFiles = Array.from(selectedFiles).filter(file => 
+                    file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')
+                );
+                
+                if (pdfFiles.length === 0) {
+                    showError('Please select valid PDF files');
+                    return;
+                }
+                
+                // Add files to our array
+                files = [...files, ...pdfFiles];
+                updateFileList();
+                updateButtons();
+            }
+            
+            // Update file list display
+            function updateFileList() {
+                // Clear existing list except the empty message
+                const fileItems = fileList.querySelectorAll('.file-item');
+                fileItems.forEach(item => item.remove());
+                
+                // Show/hide empty message
+                fileListEmpty.style.display = files.length === 0 ? 'block' : 'none';
+                
+                // Add file items
+                files.forEach((file, index) => {
+                    const fileItem = document.createElement('div');
+                    fileItem.className = 'file-item';
+                    fileItem.dataset.index = index;
+                    
+                    fileItem.innerHTML = `
+                        <div class="file-handle">
+                            <i class="fas fa-grip-lines"></i>
+                        </div>
+                        <div class="file-preview">
+                            <i class="fas fa-file-pdf"></i>
+                        </div>
+                        <div class="file-info">
+                            <div class="file-name">${file.name}</div>
+                            <div class="file-size">${formatFileSize(file.size)}</div>
+                        </div>
+                        <div class="file-actions">
+                            <button class="file-action-btn delete" data-index="${index}" title="Remove">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
+                    `;
+                    
+                    fileList.appendChild(fileItem);
+                    
+                    // Add event listener to delete button
+                    const deleteBtn = fileItem.querySelector('.delete');
+                    deleteBtn.addEventListener('click', function() {
+                        const index = parseInt(this.dataset.index);
+                        files.splice(index, 1);
+                        updateFileList();
+                        updateButtons();
+                    });
+                });
+            }
+            
+            // Update button states
+            function updateButtons() {
+                clearBtn.disabled = files.length === 0;
+                mergeBtn.disabled = files.length < 2;
+            }
+            
+            // Merge PDFs using PDF-lib
+            async function mergePDFDocuments(pdfFiles) {
+                const { PDFDocument } = PDFLib;
+                
+                // Create new PDF document
+                const mergedPdf = await PDFDocument.create();
+                
+                // Process each PDF file
+                for (const file of pdfFiles) {
+                    // Read file as array buffer
+                    const arrayBuffer = await readFileAsArrayBuffer(file);
+                    
+                    // Load the PDF document
+                    const pdfDoc = await PDFDocument.load(arrayBuffer);
+                    
+                    // Get all pages
+                    const pages = await pdfDoc.getPages();
+                    
+                    // Copy pages to merged document
+                    for (let i = 0; i < pages.length; i++) {
+                        const [copiedPage] = await mergedPdf.copyPages(pdfDoc, [i]);
+                        mergedPdf.addPage(copiedPage);
+                    }
+                }
+                
+                // Save and return the merged PDF
+                const mergedPdfBytes = await mergedPdf.save();
+                return mergedPdfBytes;
+            }
+            
+            // Helper function to read file as array buffer
+            function readFileAsArrayBuffer(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result);
+                    reader.onerror = reject;
+                    reader.readAsArrayBuffer(file);
+                });
+            }
+        });
+    </script>
+</body>
+</html>
