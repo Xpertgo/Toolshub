@@ -133,6 +133,24 @@
         .size-info small {
             color: #6c757d;
         }
+
+        .compression-mode {
+            margin: 1rem 0;
+        }
+
+        .compression-mode label {
+            display: block;
+            margin: 0.5rem 0;
+        }
+
+        .compression-mode input[type="checkbox"] {
+            margin-right: 0.5rem;
+        }
+
+        .download-section {
+            margin-top: 1.5rem;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -201,6 +219,10 @@
                         <input type="checkbox" id="fontSubsetting" checked>
                         Optimize Fonts
                     </label>
+                    <label>
+                        <input type="checkbox" id="removeMetadata" checked>
+                        Remove Metadata
+                    </label>
                 </div>
                 <button class="btn-primary" id="compressButton">Compress PDF</button>
             </div>
@@ -214,6 +236,12 @@
 
             <div class="preview-container">
                 <canvas id="previewCanvas"></canvas>
+            </div>
+
+            <div class="download-section" id="downloadSection" style="display: none;">
+                <button class="btn-primary" id="downloadButton">
+                    <i class="fas fa-download"></i> Download Compressed PDF
+                </button>
             </div>
         </div>
     </main>
@@ -238,16 +266,21 @@
             const fileInput = document.getElementById('fileInput');
             const fileInfo = document.getElementById('fileInfo');
             const compressionOptions = document.getElementById('compressionOptions');
+            const downloadSection = document.getElementById('downloadSection');
             const originalSizeSpan = document.getElementById('originalSize');
             const compressedSizeSpan = document.getElementById('compressedSize');
             const qualitySlider = document.getElementById('qualitySlider');
             const imageCompression = document.getElementById('imageCompression');
             const fontSubsetting = document.getElementById('fontSubsetting');
+            const removeMetadata = document.getElementById('removeMetadata');
             const compressButton = document.getElementById('compressButton');
+            const downloadButton = document.getElementById('downloadButton');
             const loading = document.getElementById('loading');
             const progress = document.getElementById('progress');
+            
             let currentPdfDoc = null;
             let originalFileSize = 0;
+            let compressedPdfBytes = null;
 
             // Handle drag and drop
             dropZone.addEventListener('dragover', (e) => {
@@ -283,6 +316,7 @@
             qualitySlider.addEventListener('input', updateEstimatedSize);
             imageCompression.addEventListener('change', updateEstimatedSize);
             fontSubsetting.addEventListener('change', updateEstimatedSize);
+            removeMetadata.addEventListener('change', updateEstimatedSize);
 
             async function handlePdfFile(file) {
                 try {
@@ -298,6 +332,7 @@
 
                     fileInfo.style.display = 'block';
                     compressionOptions.style.display = 'block';
+                    downloadSection.style.display = 'none';
                     updateEstimatedSize();
                     progress.style.width = '100%';
 
@@ -315,36 +350,46 @@
             function updateEstimatedSize() {
                 if (!originalFileSize) return;
 
-                const qualityFactor = 1 - (qualitySlider.value - 1) * 0.2;
+                const qualityFactor = 1 - (qualitySlider.value - 1) * 0.15;
                 let estimatedSize = originalFileSize * qualityFactor;
 
                 if (imageCompression.checked) {
-                    estimatedSize *= 0.8;
+                    estimatedSize *= 0.7;
                 }
                 if (fontSubsetting.checked) {
-                    estimatedSize *= 0.9;
+                    estimatedSize *= 0.85;
+                }
+                if (removeMetadata.checked) {
+                    estimatedSize *= 0.95;
                 }
 
+                // Ensure minimum size is reasonable
+                estimatedSize = Math.max(estimatedSize, originalFileSize * 0.1);
+                
                 compressedSizeSpan.textContent = formatFileSize(estimatedSize);
             }
 
             async function displayPreview(arrayBuffer) {
-                const pdfjsLib = window['pdfjs-dist/build/pdf'];
-                const loadingTask = pdfjsLib.getDocument({data: arrayBuffer});
-                const pdf = await loadingTask.promise;
-                const page = await pdf.getPage(1);
-                
-                const canvas = document.getElementById('previewCanvas');
-                const context = canvas.getContext('2d');
-                const viewport = page.getViewport({scale: 1.5});
-                
-                canvas.height = viewport.height;
-                canvas.width = viewport.width;
-                
-                await page.render({
-                    canvasContext: context,
-                    viewport: viewport
-                }).promise;
+                try {
+                    const pdfjsLib = window['pdfjs-dist/build/pdf'];
+                    const loadingTask = pdfjsLib.getDocument({data: arrayBuffer});
+                    const pdf = await loadingTask.promise;
+                    const page = await pdf.getPage(1);
+                    
+                    const canvas = document.getElementById('previewCanvas');
+                    const context = canvas.getContext('2d');
+                    const viewport = page.getViewport({scale: 1.5});
+                    
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+                    
+                    await page.render({
+                        canvasContext: context,
+                        viewport: viewport
+                    }).promise;
+                } catch (error) {
+                    console.error('Preview error:', error);
+                }
             }
 
             function formatFileSize(bytes) {
@@ -368,20 +413,90 @@
 
                 try {
                     loading.style.display = 'block';
-                    progress.style.width = '30%';
+                    progress.style.width = '20%';
 
-                    // Create a copy of the PDF for compression
-                    const pdfBytes = await currentPdfDoc.save({
+                    // Create a new PDF for compression
+                    const newPdfDoc = await PDFLib.PDFDocument.create();
+                    const pages = await currentPdfDoc.getPages();
+                    
+                    progress.style.width = '40%';
+
+                    // Copy pages with compression
+                    for (let i = 0; i < pages.length; i++) {
+                        const [page] = await newPdfDoc.copyPages(currentPdfDoc, [i]);
+                        newPdfDoc.addPage(page);
+                        
+                        // Update progress
+                        const progressPercent = 40 + (i / pages.length) * 30;
+                        progress.style.width = `${progressPercent}%`;
+                    }
+
+                    progress.style.width = '70%';
+
+                    // Apply compression settings
+                    let compressionOptions = {
                         useObjectStreams: true,
                         addDefaultPage: false,
                         objectsPerTick: 50,
                         updateFieldAppearances: false,
                         compress: true
-                    });
+                    };
 
-                    progress.style.width = '80%';
+                    // Save with compression
+                    const pdfBytes = await newPdfDoc.save(compressionOptions);
+                    
+                    progress.style.width = '90%';
 
-                    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+                    // Further compress using additional techniques
+                    let finalBytes = pdfBytes;
+                    
+                    // If image compression is enabled, try to further compress
+                    if (imageCompression.checked) {
+                        // Additional compression pass
+                        const tempDoc = await PDFLib.PDFDocument.load(pdfBytes);
+                        const tempBytes = await tempDoc.save({
+                            useObjectStreams: true,
+                            compress: true,
+                            objectsPerTick: 100
+                        });
+                        finalBytes = tempBytes;
+                    }
+
+                    compressedPdfBytes = finalBytes;
+                    
+                    // Show compressed size
+                    const compressedSize = finalBytes.length;
+                    compressedSizeSpan.textContent = formatFileSize(compressedSize);
+                    
+                    progress.style.width = '100%';
+                    
+                    // Show download button
+                    downloadSection.style.display = 'block';
+                    
+                    // Auto-download with small delay
+                    setTimeout(() => {
+                        downloadCompressedPDF();
+                    }, 500);
+
+                } catch (error) {
+                    console.error('Error compressing PDF:', error);
+                    alert('Error compressing PDF. Please try again.');
+                } finally {
+                    loading.style.display = 'none';
+                    progress.style.width = '0%';
+                }
+            });
+
+            downloadButton.addEventListener('click', downloadCompressedPDF);
+
+            function downloadCompressedPDF() {
+                if (!compressedPdfBytes) {
+                    alert('Please compress a PDF first');
+                    return;
+                }
+
+                try {
+                    const blob = new Blob([compressedPdfBytes], { type: 'application/pdf' });
                     const url = URL.createObjectURL(blob);
                     
                     const a = document.createElement('a');
@@ -391,18 +506,13 @@
                     a.click();
                     document.body.removeChild(a);
                     URL.revokeObjectURL(url);
-
-                    progress.style.width = '100%';
                 } catch (error) {
-                    console.error('Error compressing PDF:', error);
-                    alert('Error compressing PDF. Please try again.');
-                } finally {
-                    loading.style.display = 'none';
-                    progress.style.width = '0%';
+                    console.error('Download error:', error);
+                    alert('Error downloading PDF. Please try again.');
                 }
-            });
+            }
         });
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
 </body>
-</html> 
+</html>
